@@ -3,6 +3,7 @@ import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import About from "./components/About";
 import Technologies from "./components/Technologies";
+import Experience from "./components/Experience";
 const App = () => {
   return (
     <div className="overflow-x-hidden text-neutral-300 antialiased selection:bg-cyan-300 selection:text-cyan-900 min-h-screen">
@@ -13,6 +14,7 @@ const App = () => {
         <Hero />
         <About />
         <Technologies />
+        <Experience />
       </div>
     </div>
   );
