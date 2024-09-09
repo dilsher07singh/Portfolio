@@ -1,7 +1,6 @@
 import project1 from "../assets/projects/project-1.jpg";
 import project2 from "../assets/projects/project-2.jpg";
 import project3 from "../assets/projects/project-3.jpg";
-import project4 from "../assets/projects/project-4.jpg";
 
 export const HERO_CONTENT = `I'm Dilsher from Hong Kong, with a Computer Engineering degree from HKUST, ranked in the global top 25. I'm passionate about the Web3 ecosystem and exploring languages that drive innovation. Always curious and committed to lifelong learning, I seek to enhance my skills and contribute to impactful projects.
 
@@ -40,20 +39,35 @@ export const EXPERIENCES = [
 
 export const PROJECTS = [
   {
-    title: "E-Commerce Website",
+    title: "DualMint Marketplace",
     image: project1,
     description:
-      "A fully functional e-commerce website with features like product listing, shopping cart, and user authentication.",
-    technologies: ["HTML", "CSS", "React", "Node.js", "MongoDB"],
+      "A fully functional marketplace with an audited smart contract from Hacken. Built for crowdfunding projects and RWAT",
+    technologies: [
+      "Solidity",
+      "React",
+      "nodeJS",
+      "MongoDB",
+      "MaterialUI",
+      "AWS",
+    ],
+    link: "https://explore.dualmint.com/",
+  },
+  {
+    title: "Dualmint Marketing Page",
+    image: project2,
+    description:
+      "A static website made using Wix that provides information about the project and its team. Fully functional with interactive features.",
+    technologies: ["Wix", "HTML", "CSS"],
     link: "https://www.project1.com",
   },
   {
-    title: "Task Management App",
-    image: project2,
+    title: "Ipseity Network Web and Mobile Version",
+    image: project3,
     description:
-      "An application for managing tasks and projects, with features such as task creation, assignment, and progress tracking.",
-    technologies: ["HTML", "CSS", "Angular", "Firebase"],
-    link: "https://www.project1.com",
+      "Designed and integrated a decentralized platform where individuals retain full ownership and control of their personal data, allowing them to share it with companies on their own terms",
+    technologies: ["Cybersecurity", "Javascript", "mySQL"],
+    link: "https://www.ipseity.network/",
   },
 ];
 

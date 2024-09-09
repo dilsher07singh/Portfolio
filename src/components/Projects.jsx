@@ -66,10 +66,17 @@ const Projects = () => {
       </div>
       {/* Add the "All Projects" button here with the same style as "View Project" */}
       <div className="mt-10 flex justify-center">
-        <div className="mt-4 flex items-center text-purple-600 hover:text-purple-500 transition-colors cursor-pointer">
-          <span className="mr-2 font-semibold">All Projects</span>
-          <FaArrowRight /> {/* Arrow icon next to text */}
-        </div>
+        <a
+          href={"https://github.com/dilsher07singh"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block mb-8 transition-transform transform hover:scale-105" // Hover effect
+        >
+          <div className="mt-4 flex items-center text-purple-600 hover:text-purple-500 transition-colors cursor-pointer">
+            <span className="mr-2 font-semibold">All Projects</span>
+            <FaArrowRight /> {/* Arrow icon next to text */}
+          </div>
+        </a>
       </div>
     </div>
   );
