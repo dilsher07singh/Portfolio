@@ -59,7 +59,7 @@ export const PROJECTS = [
     description:
       "A static website made using Wix that provides information about the project and its team. Fully functional with interactive features.",
     technologies: ["Wix", "HTML", "CSS"],
-    link: "https://www.project1.com",
+    link: "https://www.dualmint.com/",
   },
   {
     title: "Ipseity Network Web and Mobile Version",
