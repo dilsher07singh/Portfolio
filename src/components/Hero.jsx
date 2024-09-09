@@ -34,7 +34,7 @@ const Hero = () => {
               animate="visible"
               className="bg-gradient-to-r from-pink-300 via-slate-500 to-purple-500 bg-clip-text text-3xl tracking-tight text-transparent"
             >
-              Full Stack Developer
+              Full Stack Web3 Developer
             </motion.span>
             <motion.p
               variants={container(1)}
@@ -54,7 +54,7 @@ const Hero = () => {
               initial={{ x: 100, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 1, delay: 1.2 }}
-              className="rounded-2xl "
+              className="rounded-2xl max-w-xs lg:max-w-sm"
               src={profilePic}
               alt="Dilsher Singh"
             />
