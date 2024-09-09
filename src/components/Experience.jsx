@@ -34,7 +34,13 @@ const Experience = () => {
                   {experience.company}
                 </span>
               </h6>
-              <p className="mb-4 text-neutral-400">{experience.description}</p>
+              <ul className="list-disc ml-5 mb-4 text-neutral-400">
+                {experience.description.map((desc, index) => (
+                  <li key={index} className="mb-2">
+                    {desc}
+                  </li>
+                ))}
+              </ul>
               <p className="mb-4 text-neutral-400">
                 {experience.technologies.map((tech, index) => (
                   <span

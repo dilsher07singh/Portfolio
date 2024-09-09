@@ -11,32 +11,30 @@ export const ABOUT_TEXT = `I am a dedicated and versatile full stack developer w
 
 export const EXPERIENCES = [
   {
-    year: "2023 - Present",
-    role: "Senior Full Stack Developer",
-    company: "Google Inc.",
-    description: `Led a team in developing and maintaining web applications using JavaScript, React.js, and Node.js. Implemented RESTful APIs and integrated with MongoDB databases. Collaborated with stakeholders to define project requirements and timelines.`,
-    technologies: ["Javascript", "React.js", "Next.js", "mongoDB"],
-  },
-  {
-    year: "2022 - 2023",
-    role: "Frontend Developer",
-    company: "Adobe",
-    description: `Designed and developed user interfaces for web applications using Next.js and React. Worked closely with backend developers to integrate frontend components with Node.js APIs. Implemented responsive designs and optimized frontend performance.`,
-    technologies: ["HTML", "CSS", "Vue.js", "mySQL"],
-  },
-  {
-    year: "2021 - 2022",
-    role: "Full Stack Developer",
-    company: "Facebook",
-    description: `Developed and maintained web applications using JavaScript, React.js, and Node.js. Designed and implemented RESTful APIs for data communication. Collaborated with cross-functional teams to deliver high-quality software products on schedule.`,
-    technologies: ["Python", "Svelte", "Three.js", "Postgres"],
+    year: "2021 - Present",
+    role: "Full Stack Web3 Developer",
+    company: "Ipseity Network",
+    description: [
+      "Utilized React JS, SQL, encryption algorithms, and APIs to build a web application; developed an integrated mobile app using React Native.",
+      "Led the development of a secure platform enabling data analysis for companies via homomorphic encryption.",
+      "Created a unique marketplace for NFTs representing physical assets.",
+      "Built responsive UI for both iOS and Android with custom features.",
+      "Developed and tested blockchain-based smart contracts in Solidity, achieving top security audit scores from Hacken.",
+      "Integrated backend with Web3 to facilitate seamless smart contract interactions.",
+      "Designed and implemented RESTful APIs for server-side functionality.",
+    ],
+    technologies: ["Solidity", "Typescript", "Next.js", "NodeJS", "mongoDB"],
   },
   {
     year: "2020 - 2021",
-    role: "Software Engineer",
-    company: "Paypal",
-    description: `Contributed to the development of web applications using JavaScript, React.js, and Node.js. Managed databases and implemented data storage solutions using MongoDB. Worked closely with product managers to prioritize features and enhancements.`,
-    technologies: ["Ruby", "Rails", "PHP", "Sqlite"],
+    role: "Software Engineering Intern",
+    company: "inGO Electric",
+    description: [
+      "Developed interactive front-end using HTML, CSS, and JavaScript.",
+      "Automated data entries from Excel to Forms using Google Script Editor.",
+      "Analyzed large survey data with Python (NumPy, Pandas, Scikit-learn) to identify target demographics for new products.",
+    ],
+    technologies: ["Python", "Javascript", "TailwindCSS", "Bootstrap"],
   },
 ];
 
