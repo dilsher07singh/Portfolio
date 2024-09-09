@@ -5,6 +5,7 @@ import { FaArrowRight } from "react-icons/fa"; // Import arrow icon
 const Projects = () => {
   return (
     <div className="border-b border-neutral-900 pb-4">
+      {/* SEO-Optimized Heading */}
       <motion.h1
         whileInView={{ opacity: 1, y: 0 }}
         initial={{ opacity: 0, y: -100 }}
@@ -13,6 +14,8 @@ const Projects = () => {
       >
         Projects
       </motion.h1>
+
+      {/* List of Projects */}
       <div className="space-y-8">
         {PROJECTS.map((project, index) => (
           <a
@@ -21,8 +24,10 @@ const Projects = () => {
             rel="noopener noreferrer"
             key={index}
             className="block mb-8 transition-transform transform hover:scale-105" // Hover effect
+            aria-label={`View details about the project ${project.title}`}
           >
             <div className="p-4 shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg flex flex-wrap lg:justify-center">
+              {/* Project Image */}
               <motion.div
                 whileInView={{ opacity: 1, x: 0 }}
                 initial={{ opacity: 0, x: -100 }}
@@ -33,10 +38,12 @@ const Projects = () => {
                   src={project.image}
                   width={150}
                   height={150}
-                  alt={project.title}
+                  alt={`Screenshot of the project ${project.title}`}
                   className="mb-6 rounded"
                 />
               </motion.div>
+
+              {/* Project Description */}
               <motion.div
                 whileInView={{ opacity: 1, x: 0 }}
                 initial={{ opacity: 0, x: 100 }}
@@ -45,36 +52,44 @@ const Projects = () => {
               >
                 <h6 className="mb-2 font-semibold text-xl">{project.title}</h6>
                 <p className="mb-4 text-neutral-400">{project.description}</p>
+
+                {/* Technologies Used */}
                 <div className="mb-4">
-                  {project.technologies.map((tech, index) => (
+                  {project.technologies.map((tech, techIndex) => (
                     <span
-                      key={index}
+                      key={techIndex}
                       className="mr-2 rounded bg-neutral-900 px-2 py-1 text-sm font-medium text-purple-900"
+                      aria-label={`Technology used: ${tech}`}
+                      title={tech}
                     >
                       {tech}
                     </span>
                   ))}
                 </div>
+
+                {/* View Project Button */}
                 <div className="mt-4 flex items-center text-purple-600 hover:text-purple-500 transition-colors">
                   <span className="mr-2 font-semibold">View Project</span>
-                  <FaArrowRight /> {/* Arrow icon next to text */}
+                  <FaArrowRight aria-hidden="true" /> {/* Arrow icon */}
                 </div>
               </motion.div>
             </div>
           </a>
         ))}
       </div>
-      {/* Add the "All Projects" button here with the same style as "View Project" */}
+
+      {/* "All Projects" Button */}
       <div className="mt-10 flex justify-center">
         <a
-          href={"https://github.com/dilsher07singh"}
+          href="https://github.com/dilsher07singh"
           target="_blank"
           rel="noopener noreferrer"
-          className="block mb-8 transition-transform transform hover:scale-105" // Hover effect
+          className="block mb-8 transition-transform transform hover:scale-105"
+          aria-label="View all projects on GitHub"
         >
           <div className="mt-4 flex items-center text-purple-600 hover:text-purple-500 transition-colors cursor-pointer">
             <span className="mr-2 font-semibold">All Projects</span>
-            <FaArrowRight /> {/* Arrow icon next to text */}
+            <FaArrowRight aria-hidden="true" /> {/* Arrow icon */}
           </div>
         </a>
       </div>

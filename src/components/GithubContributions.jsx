@@ -70,23 +70,26 @@ const GithubContributions = () => {
 
   return (
     <div className="border-b border-neutral-900 pb-4">
-      {/* Total Contributions */}
+      {/* SEO Optimized Heading */}
       <motion.h1
         whileInView={{ opacity: 1, y: 0 }}
         initial={{ opacity: 0, y: -100 }}
         transition={{ duration: 0.5 }}
         className="my-20 text-center text-4xl"
       >
-        Github Contributions
+        GitHub Contributions
       </motion.h1>
 
       {/* Display total contributions */}
       <p className="text-center text-lg mb-8">
-        Last Year Contributions: {totalContributions}
+        Last Year GitHub Contributions: {totalContributions}
       </p>
 
       {/* Month labels */}
-      <div className="flex justify-center mb-4">
+      <div
+        className="flex justify-center mb-4"
+        aria-label="Month labels for contribution graph"
+      >
         {monthLabels.map((month, index) => (
           <span key={index} className="w-12 text-center text-sm">
             {month}
@@ -101,9 +104,12 @@ const GithubContributions = () => {
             {week.contributionDays.map((day, dayIndex) => (
               <div
                 key={dayIndex}
-                className="w-4 h-4 md:w-6 md:h-6" // Responsive sizes
+                className="w-4 h-4 md:w-6 md:h-6"
                 style={{ backgroundColor: day.color }}
                 title={`${day.contributionCount} contributions on ${day.date}`}
+                aria-label={`${
+                  day.contributionCount
+                } contributions on ${new Date(day.date).toLocaleDateString()}`}
               />
             ))}
           </div>

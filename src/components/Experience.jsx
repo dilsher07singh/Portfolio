@@ -1,8 +1,10 @@
 import { EXPERIENCES } from "../constants";
 import { motion } from "framer-motion";
+
 const Experience = () => {
   return (
     <div className="border-b border-neutral-900 pb-4">
+      {/* SEO Optimized Heading */}
       <motion.h1
         whileInView={{ opacity: 1, y: 0 }}
         initial={{ opacity: 0, y: -100 }}
@@ -11,9 +13,15 @@ const Experience = () => {
       >
         Experience
       </motion.h1>
+
+      {/* Mapping through experience items */}
       <div>
         {EXPERIENCES.map((experience, index) => (
-          <div key={index} className="mb-8 flex flex-wrap lg:justify-center">
+          <article
+            key={index}
+            className="mb-8 flex flex-wrap lg:justify-center"
+          >
+            {/* Year Section */}
             <motion.div
               whileInView={{ opacity: 1, x: 0 }}
               initial={{ opacity: 0, x: -100 }}
@@ -22,37 +30,49 @@ const Experience = () => {
             >
               <p className="mb-2 text-sm text-neutral-400">{experience.year}</p>
             </motion.div>
+
+            {/* Role and Description Section */}
             <motion.div
               whileInView={{ opacity: 1, x: 0 }}
               initial={{ opacity: 0, x: 100 }}
               transition={{ duration: 1 }}
               className="w-full max-w-xl lg:w-3/4"
             >
-              <h6 className="mb-2 font-semibold">
+              {/* SEO Optimized Role and Company */}
+              <h2 className="mb-2 font-semibold">
                 {experience.role} -{" "}
-                <span className="text-sm text-purple-100">
+                <span
+                  className="text-sm text-purple-100"
+                  aria-label={`Company: ${experience.company}`}
+                >
                   {experience.company}
                 </span>
-              </h6>
+              </h2>
+
+              {/* Description of the experience */}
               <ul className="list-disc ml-5 mb-4 text-neutral-400">
-                {experience.description.map((desc, index) => (
-                  <li key={index} className="mb-2">
+                {experience.description.map((desc, descIndex) => (
+                  <li key={descIndex} className="mb-2">
                     {desc}
                   </li>
                 ))}
               </ul>
+
+              {/* Technologies Used */}
               <p className="mb-4 text-neutral-400">
-                {experience.technologies.map((tech, index) => (
+                {experience.technologies.map((tech, techIndex) => (
                   <span
-                    key={index}
+                    key={techIndex}
                     className="mr-2 mt-4 rounded bg-neutral-900 px-2 py-1 text-sm font-medium text-purple-800"
+                    aria-label={`Technology used: ${tech}`}
+                    title={tech}
                   >
                     {tech}
                   </span>
                 ))}
               </p>
             </motion.div>
-          </div>
+          </article>
         ))}
       </div>
     </div>

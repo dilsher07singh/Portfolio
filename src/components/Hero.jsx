@@ -2,8 +2,7 @@ import { HERO_CONTENT } from "../constants";
 import profilePic from "../assets/dilsherSinghProfile.png";
 import { motion } from "framer-motion";
 
-//GET CONTAINER SO THAT EVERYTHING IS MODULARIZED AND CAN BE CHANGED IN ONE PLACE
-
+// Modular container for animation control
 const container = (delay) => ({
   hidden: { x: -100, opacity: 0 },
   visible: {
@@ -28,14 +27,18 @@ const Hero = () => {
             >
               Dilsher Singh
             </motion.h1>
+
+            {/* SEO-optimized subtitle */}
             <motion.span
               variants={container(0.5)}
               initial="hidden"
               animate="visible"
               className="bg-gradient-to-r from-pink-300 via-slate-500 to-purple-500 bg-clip-text text-3xl tracking-tight text-transparent"
+              aria-label="Full Stack Web3 Developer"
             >
               Full Stack Web3 Developer
             </motion.span>
+
             <motion.p
               variants={container(1)}
               initial="hidden"
@@ -56,7 +59,7 @@ const Hero = () => {
               transition={{ duration: 1, delay: 1.2 }}
               className="rounded-2xl max-w-xs lg:max-w-sm"
               src={profilePic}
-              alt="Dilsher Singh"
+              alt="Dilsher Singh - Web3 Full Stack Developer"
             />
           </div>
         </div>
