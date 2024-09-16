@@ -1,12 +1,12 @@
 import { FaLinkedin, FaGithub, FaWhatsapp, FaInstagram } from "react-icons/fa";
-import logo from "../assets/dilsherSinghLogo.webp";
+import logo from "../assets/dilsherSinghLogo2.png";
 
 const Navbar = () => {
   return (
     <nav className="mb-20 flex items-center justify-between py-6">
       {/* Logo with optimized alt text */}
       <div className="flex flex-shrink-0 items-center">
-        <img className="mx-2 w-20" src={logo} alt="Dilsher Singh Logo" />
+        <img className="mx-2 w-32" src={logo} alt="Dilsher Singh Logo" />
       </div>
 
       {/* Social Media Links */}
