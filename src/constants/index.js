@@ -11,7 +11,7 @@ export const ABOUT_TEXT = `I am a dedicated and versatile full stack developer w
 export const EXPERIENCES = [
   {
     year: "2021 - Present",
-    role: "Full Stack Web3 Developer",
+    role: "Senior Full Stack Developer",
     company: "Ipseity Network",
     description: [
       "Utilized React JS, SQL, encryption algorithms, and APIs to build a web application; developed an integrated mobile app using React Native.",

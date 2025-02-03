@@ -14,7 +14,7 @@ const container = (delay) => ({
 
 const Hero = () => {
   return (
-    <div className="border-b border-neutral-900 pb-4 lg:mb-35">
+    <div className="pb-4 border-b border-neutral-900 lg:mb-35">
       <div className="flex flex-col lg:flex-row">
         {/* Content Section */}
         <div className="w-full lg:w-1/2">
@@ -33,17 +33,17 @@ const Hero = () => {
               variants={container(0.5)}
               initial="hidden"
               animate="visible"
-              className="bg-gradient-to-r from-pink-300 via-slate-500 to-purple-500 bg-clip-text text-3xl tracking-tight text-transparent"
-              aria-label="Full Stack Web3 Developer"
+              className="text-3xl tracking-tight text-transparent bg-gradient-to-r from-pink-300 via-slate-500 to-purple-500 bg-clip-text"
+              aria-label="Senior Full Stack Developer"
             >
-              Full Stack Web3 Developer
+              Senior Full Stack Developer
             </motion.span>
 
             <motion.p
               variants={container(1)}
               initial="hidden"
               animate="visible"
-              className="my-2 max-w-xl py-6 font-light tracking-tighter"
+              className="max-w-xl py-6 my-2 font-light tracking-tighter"
             >
               {HERO_CONTENT}
             </motion.p>
@@ -57,7 +57,7 @@ const Hero = () => {
               initial={{ x: 100, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 1, delay: 1.2 }}
-              className="rounded-2xl max-w-xs lg:max-w-sm"
+              className="max-w-xs rounded-2xl lg:max-w-sm"
               src={profilePic}
               alt="Dilsher Singh - Web3 Full Stack Developer"
             />
