@@ -1,16 +1,22 @@
-import { FaLinkedin, FaGithub, FaWhatsapp, FaInstagram } from "react-icons/fa";
+import {
+  FaLinkedin,
+  FaGithub,
+  FaWhatsapp,
+  FaInstagram,
+  FaYoutube,
+} from "react-icons/fa";
 import logo from "../assets/dilsherSinghLogo2.png";
 
 const Navbar = () => {
   return (
-    <nav className="mb-20 flex items-center justify-between py-6">
+    <nav className="flex items-center justify-between py-6 mb-20">
       {/* Logo with optimized alt text */}
-      <div className="flex flex-shrink-0 items-center">
-        <img className="mx-2 w-32" src={logo} alt="Dilsher Singh Logo" />
+      <div className="flex items-center flex-shrink-0">
+        <img className="w-32 mx-2" src={logo} alt="Dilsher Singh Logo" />
       </div>
 
       {/* Social Media Links */}
-      <div className="m-8 flex items-center justify-center gap-4 text-2xl">
+      <div className="flex items-center justify-center gap-4 m-8 text-2xl">
         <a
           href="https://www.linkedin.com/in/dilsher07singh/"
           target="_blank"
@@ -49,6 +55,15 @@ const Navbar = () => {
           aria-label="WhatsApp Dilsher Singh"
         >
           <FaWhatsapp />
+        </a>
+        <a
+          href="https://www.youtube.com/@dilsher07singh"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Message Dilsher Singh on WhatsApp"
+          aria-label="WhatsApp Dilsher Singh"
+        >
+          <FaYoutube />
         </a>
       </div>
     </nav>

@@ -1,5 +1,5 @@
 import project1 from "../assets/projects/project-1.jpg";
-import project2 from "../assets/projects/project-2.jpg";
+import project2 from "../assets/projects/project-2.png";
 import project3 from "../assets/projects/project-3.jpg";
 
 export const HERO_CONTENT = `I'm Dilsher from Hong Kong, with a Computer Engineering degree from HKUST, ranked in the global top 25. I'm passionate about the Web3 ecosystem and exploring languages that drive innovation. Always curious and committed to lifelong learning, I seek to enhance my skills and contribute to impactful projects.
@@ -39,6 +39,20 @@ export const EXPERIENCES = [
 
 export const PROJECTS = [
   {
+    title: "Notion Clone Youtube",
+    image: project2,
+    description:
+      "This project demonstrates how Next.js, Cloudflare, Clerk, and AI can be combined to build a scalable, real-time, and intelligent web application. It showcases the power of AI-enhanced collaboration and modern web technologies in creating efficient and user-friendly digital experiences.",
+    technologies: [
+      "NextJS",
+      "Cloudflare Workers",
+      "Clerk",
+      "Firestore",
+      "Liveblocks",
+    ],
+    link: "https://notion-clone-youtube-six.vercel.app/",
+  },
+  {
     title: "DualMint Marketplace",
     image: project1,
     description:
@@ -53,14 +67,7 @@ export const PROJECTS = [
     ],
     link: "https://explore.dualmint.com/",
   },
-  {
-    title: "Dualmint Marketing Page",
-    image: project2,
-    description:
-      "A static website made using Wix that provides information about the project and its team. Fully functional with interactive features.",
-    technologies: ["Wix", "HTML", "CSS"],
-    link: "https://www.dualmint.com/",
-  },
+
   {
     title: "Ipseity Network Web and Mobile Version",
     image: project3,
