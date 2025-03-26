@@ -16,7 +16,7 @@ const Navbar = () => {
       </div>
 
       {/* Social Media Links */}
-      <div className="flex items-center justify-center gap-4 m-8 text-2xl">
+      <div className="flex items-center justify-center gap-2 text-xl lg:text-2xl lg:gap-4 lg:m-8">
         <a
           href="https://www.linkedin.com/in/dilsher07singh/"
           target="_blank"
