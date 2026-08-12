@@ -1465,3 +1465,175 @@ beside the preconnects, drop the unused italic axis, and add vercel.json with
 cache and security headers. It also kills the fonts.googleapis.com console
 error that every loop has been reporting. Then POLISH-002 (priority 11), or
 A11Y-005 (priority 12) while the a11y context is fresh.
+
+--------------------------------------------------------------------------
+2026-08-12 — PERF-003 (priority 9, performance): the font left the @import
+             chain, and vercel.json now ships cache + security headers
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+Highest-priority item still open (priority 9) and nominated by the last two
+loops. SEO-003 had already unblocked it by adding the preconnect hints its
+step 1 depends on. Taken in priority order. POLISH-002 (11) and A11Y-005 (12)
+are UNTOUCHED.
+
+WHAT WAS DONE
+- index.html: the Google Fonts request is now a <link rel="stylesheet">, placed
+  immediately after SEO-003's two preconnects. The ital axis is gone:
+    ...css2?family=Inter:opsz,wght@14..32,100..900&display=swap
+- src/index.css: the @import is deleted (a comment explains where it went).
+- vercel.json: NEW. Cache-Control + the three security headers.
+
+>>> I MEASURED THE MECHANISM INSTEAD OF ASSERTING IT <<<
+Built HEAD (a16abf6) in a git worktree, served it on :3001 next to the new
+build on :3000, and compared PerformanceResourceTiming for the
+fonts.googleapis.com request. The signal is categorical, not a noisy delta —
+initiatorType flips:
+
+  BASELINE  initiatorType "css"   font @ 59.5ms, app CSS responseEnd 56.7ms
+            -> discovered 2.8ms AFTER the stylesheet finished downloading
+  AFTER     initiatorType "link"  font @ 59.1ms, app CSS startTime  60.1ms
+            -> discovered 1.0ms BEFORE the stylesheet was even requested
+
+Reproduced on a second matched pair (baseline 68.0 vs 63.2 = serial;
+after 52.0 vs 52.3 = parallel). That is the three-step chain in the item's
+description collapsing to two, demonstrated rather than argued.
+
+PAYLOAD NUMBERS — curl, not estimates
+  old (ital+opsz+wght)   CSS 4,774 B, 14 @font-face rules
+  new (roman only)       CSS 2,379 B,  7 @font-face rules   (half)
+
+>>> STEP 2 SAYS "keeping only the roman weights the site actually uses" AND I
+>>> DID NOT NARROW THE RANGE. HERE IS WHY. <<<
+The site uses five weights: 100 (font-thin, the Hero h1), 300, 400, 500, 600.
+No strong/b/em anywhere; Contact.jsx explicitly sets not-italic. So dropping
+the slanted axis is unambiguously safe.
+But narrowing wght@100..900 to 100..600 saves EXACTLY ZERO BYTES. Google hands
+back the IDENTICAL file for both — same URL, UcCo3FwrK3iLTcviYwY.woff2, 72,920 B
+for latin — and changes only the declared font-weight descriptor. What it DOES
+change is that any future weight 700 would clamp silently to 600. Zero benefit,
+real footgun, so the full range stays.
+Also measured and rejected: discrete weights (wght@100;300;400;500;600) are far
+worse — 35 @font-face rules, 12,354 B of CSS, and five font files instead of one.
+
+>>> A 24.7KB WIN I DELIBERATELY DID NOT TAKE — THIS ONE IS THE USER'S CALL <<<
+Dropping the opsz axis as well (family=Inter:wght@100..600) makes Google serve
+a genuinely different, smaller file:
+    with opsz     latin woff2  72,920 B
+    without opsz  latin woff2  48,256 B    -> 24,664 B / 33.8% off the critical path
+That is the single largest font win left. I did not take it because it pins
+Inter's optical size, which is a site-wide typography change — and the h1 is
+text-8xl, exactly the case the opsz axis exists to serve. Worth an explicit
+decision rather than a silent one.
+
+>>> STEP 9 CANNOT BE SATISFIED BY THE APPROACH STEP 1 MANDATES. <<<
+A cross-origin <link rel="stylesheet"> is render-blocking BY DEFINITION.
+Lighthouse will still list the font stylesheet under "Eliminate render-blocking
+resources" in production. This item genuinely improves DISCOVERY (measured
+above) but does not make the resource non-blocking, and step 1 requires the
+<link>. The two real ways to clear step 9:
+  (a) async it — media="print" onload="this.media='all'" plus a <noscript>
+      fallback. Costs a JS dependency and a guaranteed extra style recalc.
+  (b) SELF-HOST the font. Removes the third-party origin entirely, best for
+      performance AND privacy, but needs committed woff2 files and a build
+      step, and would make SEO-003's two preconnects dead code.
+Both are judgement calls outside this item's steps, so I took neither. I
+recommend (b) as a NEW PRD ITEM; it supersedes a chunk of PERF-003 and SEO-003.
+
+AND IT CANNOT BE MEASURED HERE ANYWAY: the BROWSER in this sandbox cannot reach
+fonts.googleapis.com — ERR_CERT_AUTHORITY_INVALID from the intercepting proxy.
+That is the console error every loop since RENDER-002 has been reporting.
+document.fonts is empty and the page renders in the fallback. bash/curl CAN
+reach the origin (different network path), which is where all the byte counts
+above came from. Any Lighthouse font timing taken in this sandbox is fiction —
+do not record one as evidence.
+
+VERCEL.JSON — AND HOW I AVOIDED GUESSING AT VERCEL'S PRECEDENCE RULES
+Headers only; no framework/build/output keys, so Vite auto-detection is
+untouched. The Cache-Control sources deliberately DO NOT OVERLAP, so the
+outcome does not depend on which rule Vercel considers to win:
+    /(.*)          -> nosniff, strict-origin-when-cross-origin, DENY
+    /assets/(.*)   -> public, max-age=31536000, immutable
+    /  and  /(.*).html -> public, max-age=0, must-revalidate
+Verified with VERCEL'S OWN MATCHER (path-to-regexp 6.2.1, installed to /tmp and
+removed afterwards) against the real 17-file dist inventory: every single path
+resolves to exactly one Cache-Control value and gets all three security headers.
+The unhashed public/ files (og-image.jpg, the 3 icons, site.webmanifest,
+dilsher2.svg, github-contributions.json, robots.txt, sitemap.xml) correctly fall
+through to Vercel's max-age=0 default — they have STABLE names and
+github-contributions.json is rewritten on every deploy, so marking them
+immutable would be actively wrong. Only hash-named /assets/* may be immutable.
+
+>>> THE BUG THIS LOOP ALMOST SHIPPED: TAILWIND READS YOUR HTML COMMENTS <<<
+Tailwind scans index.html for class names and does NOT skip comments. My first
+draft of the explanatory comment used the words "font-bold" and "italic" as
+ordinary English. Both are real utilities, so Tailwind dutifully emitted
+    .font-bold{font-weight:700}      then      .italic{font-style:italic}
+as DEAD CSS into the render-blocking stylesheet — while this item is nominally
+about making that stylesheet cheaper. Nothing flagged it: lint silent, build
+silent, page identical. It only surfaced because I byte-diffed the built CSS
+against the baseline. The comment now says "weight 700" and "slanted" and
+carries a warning. If you write prose in index.html, avoid utility names.
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems
+- yarn build -> pass (only the documented fetchPriority SSR warning that
+  RENDER-002's notes say explicitly not to "fix")
+- step 3: grep -c '@import url("https://fonts' src/index.css   -> 0
+- step 6: vercel.json JSON.parse's
+- built app CSS is BYTE-IDENTICAL to the baseline's once the baseline's
+  120-byte @import line is stripped -> the @import removal is provably the
+  only CSS change
+- all head assertions x2 (index.html AND the prerendered dist/index.html):
+  font link / preconnects 1 each, "ital," 0, canonical / og:image /
+  og:image:type / twitter:card / twitter:image:alt / manifest /
+  apple-touch-icon / ld+json 1 each, keywords 0, vite.svg 0, JSON-LD parses
+- prerender undisturbed: 57,131 chars injected, "Senior full stack engineer" x4,
+  0 inline opacity:0
+- regressions: 30 reveals / 0 stranded, 0 horizontal overflow, 7 named regions,
+  skip link intact, main tabIndex -1, heatmap 376 cells, focus ring still
+  rgb(192,132,252) 2px offset 2px, body bg rgb(10,10,10), :root font-family
+  still "Inter, sans-serif"
+- baseline vs after viewport screenshots: PIXEL-IDENTICAL, 0 of 1,153,620
+  subpixels differ
+
+TWO MEASUREMENT MISTAKES OF MINE, RECORDED SO YOU DON'T REPEAT THEM
+1. My first reveal sweep reported "3 stranded". That was the measurement, not
+   the page: I scrolled back to the top and sampled before the last elements'
+   transitions had finished. End the pass AT THE BOTTOM and wait ~1.5s -> 0
+   stranded, matching every previous loop.
+2. My first head-assertion pass showed three "failures" that were all my own
+   loose substrings: "apple-touch-icon" matches both rel= and href=,
+   rel="stylesheet" is legitimately 2 in dist (font + Vite's bundle), and
+   "@import" matched the word inside my own new comment. Strip comments and
+   match on full attribute text before believing a count.
+
+NOTES FOR WHOEVER IS NEXT
+- The pixel-identical screenshot proves no LAYOUT or STYLE regression, but both
+  sides rendered in the fallback font because of the cert wall. Nobody in this
+  sandbox has ever actually seen this site in Inter. If you get a real network,
+  that is worth one look.
+- Environment was CLEAN for the sixth loop running: node_modules/.bin populated,
+  lint and build fine on arrival, nothing on port 3000. I killed both my preview
+  servers, removed the /tmp/perf003-base worktree, and deleted my screenshots.
+- I dodged the pkill trap that bit the SEO-003 and A11Y-004 loops by using a
+  bracketed pattern, `pkill -f 'vite p[r]eview'`, which cannot match its own
+  command line. Recommend that form.
+- STILL OUTSTANDING FROM EARLIER LOOPS, ALL STILL NOT DONE, ALL HUMAN ACTIONS:
+  SEC-001's Vercel GITHUB_TOKEN env var and REVOKING THE LEAKED TOKEN (still
+  live, still in the deployed bundle); SEO-001's post-deploy og-image 200 check
+  plus the LinkedIn/X re-scrape; RENDER-002's post-deploy
+  `curl -s https://www.dilshersingh.com | grep -c 'Senior full stack'`.
+  PERF-003 adds two more, its steps 7 and 8: after deploying, confirm
+  `curl -sI https://www.dilshersingh.com/assets/<hashed>.js` reports
+  max-age=31536000 and immutable, and that the HTML still says must-revalidate.
+- Also still unowned by any PRD item: the sticky header does not stick
+  (diagnosis in the A11Y-003 entry — the root div's overflow-x-hidden).
+
+SUGGESTED NEXT ITEM
+POLISH-002 (priority 11) is now the head of the queue: CHIP class duplication,
+the SOCIALS array, the hardcoded GitHub URL/username, the Skills/Technologies
+nav mismatch. SEC-001's notes flagged the username duplication and explicitly
+left it to POLISH-002, so that groundwork is already scoped.
+Then A11Y-005 (12) — and read A11Y-004's note first: put the new <footer>
+OUTSIDE <main>, since main is the skip-link target.

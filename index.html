@@ -5,14 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!--
-      The webfont is still requested by an @import inside src/index.css, so the
-      browser cannot discover fonts.googleapis.com until that stylesheet has been
-      fetched and parsed. Warming both origins here overlaps the connection setup
-      with that fetch. gstatic.com serves the font files themselves and is
-      requested anonymously, hence crossorigin.
+      Webfont. These three tags belong together and in this order.
+
+      googleapis.com serves the CSS below; gstatic.com serves the font files it
+      points at, fetched anonymously, hence crossorigin. Both connections are
+      warmed here so the TLS handshakes overlap the HTML parse instead of
+      starting only once each request is discovered.
+
+      The request itself must stay in the HTML rather than moving back into an
+      @import in src/index.css: from here the preload scanner sees it in the
+      initial response, so the font CSS is fetched in parallel with the app
+      stylesheet rather than serially after it.
+
+      Axes: the roman range only. The "ital" axis is gone because no text on the
+      site is slanted, and carrying it doubled this response — 14 @font-face
+      rules down to 7. The weight range stays the full 100..900 on purpose:
+      Google serves the SAME woff2 file for 100..600 as for 100..900, so
+      narrowing it saves zero bytes while causing any future request for weight
+      700 to clamp silently to 600. See plans/prd.json PERF-003 for the numbers.
+
+      Careful when editing this comment: Tailwind scans this file for class
+      names and does NOT skip comments, so naming a utility in here emits real
+      but dead CSS into the render-blocking stylesheet. Two words already caught
+      doing that: one for weight 700, one for slanted text. Prefer numbers.
     -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap"
+    />
 
     <!--
       Entry animations are additive: content renders visible, and is only

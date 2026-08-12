@@ -1,5 +1,11 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
-
+/*
+  The webfont is NOT imported here. An @import is the slowest way to load it:
+  the browser cannot discover fonts.googleapis.com until this stylesheet has
+  been fetched and parsed, so the font CSS and then the font file queue up
+  behind it in a three-step serial chain. It is requested from a <link> in
+  index.html instead, beside the preconnect hints, where the preload scanner
+  finds it in the initial HTML.
+*/
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
