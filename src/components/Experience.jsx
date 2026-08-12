@@ -23,7 +23,7 @@ const Experience = () => {
           >
             {/* Dates */}
             <Reveal from="left" duration={1} className="w-full lg:w-1/4">
-              <p className="mb-3 text-sm text-neutral-500">{experience.year}</p>
+              <p className="mb-3 text-sm text-neutral-400">{experience.year}</p>
             </Reveal>
 
             {/* Role, achievements and stack */}

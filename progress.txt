@@ -437,3 +437,148 @@ Lighthouse score on its own) and its step 3 — width/height on the Projects.jsx
 and Navbar.jsx images — is still undone. A11Y-002 is a mechanical
 text-neutral-500 -> 400 sweep with a clear grep assertion. Both are
 browserTest:true and Playwright is confirmed working now.
+
+--------------------------------------------------------------------------
+2026-08-12 — PERF-002 (priority 4, performance): RECOVERED AND COMMITTED
+             (work done by a previous loop, never committed)
+--------------------------------------------------------------------------
+
+READ THIS FIRST IF YOU ARE WONDERING WHY THERE ARE TWO COMMITS THIS ROUND.
+The working tree already contained a complete, PRD-updated PERF-002 (Hero.jsx,
+Navbar.jsx, Projects.jsx, constants/index.js, optimize-images.mjs, the new
+src/assets/optimized/dimensions.json, and prd.json flipped to passes:true) —
+but it had never been committed and progress.txt had no entry for it. The
+previous loop clearly died between "update the PRD" and "commit".
+
+I committed it UNCHANGED and on its own (82c6e08) before starting my feature,
+so PERF-002 and A11Y-002 stay reviewable separately. I re-ran yarn lint and
+yarn build against it myself; both pass. I did NOT re-run its browser
+verification — those claims in the PRD notes belong to the loop that did the
+work, and I have left them attributed that way rather than restating them as
+mine.
+
+>>> THE BUILD WAS BROKEN ON ARRIVAL — NOT BY ANY CODE CHANGE <<<
+`yarn build` failed with "Cannot find module @rollup/rollup-darwin-arm64".
+node_modules had been installed on LINUX by earlier sandboxed loops, so only
+@rollup/rollup-linux-* were present, and we are on darwin-arm64 now. sharp had
+the same problem waiting. `yarn install --force` fixed both in 8s. That did
+rewrite yarn.lock, but purely cosmetically — it merged duplicate keys
+("string-width-cjs" with string-width@^4.1.0, same for strip-ansi) that resolve
+to identical versions and identical integrity hashes. No version or registry
+changed. I reverted it to keep the diff clean; expect it to reappear if you
+run --force again, and it is safe to discard.
+
+This is the third environment gotcha in a row on this repo (see also the empty
+node_modules/.bin in the SEO-001 entry and the npm-rewrites-yarn.lock warning
+in PERF-001). If a gate fails, check the toolchain before the code.
+
+--------------------------------------------------------------------------
+2026-08-12 — A11Y-002 (priority 4, accessibility): WCAG AA contrast fixes
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+Highest-priority item still open once PERF-002 was accounted for. A11Y-002 and
+PERF-002 were tied at priority 4; PERF-002 turned out to be already done, so
+A11Y-002 was the real head of the queue.
+
+WHAT WAS DONE
+- text-neutral-500 -> text-neutral-400 at the five small-text locations:
+  Experience.jsx (date line), GithubContributions.jsx (loading AND error),
+  About.jsx (the uppercase dt labels), Contact.jsx (copyright).
+  `grep -rc 'text-neutral-500' src/` now totals exactly 1 — the 36px "Me" in
+  the About heading, which step 2 explicitly says to leave alone.
+- border-neutral-800 -> border-neutral-700 in Hero, About, Technologies (two
+  places: the section rule and the chips), Projects. 0 occurrences remain.
+- Contact email underline border-purple-400/40 -> /70.
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems
+- yarn build -> pass
+- axe-core 4.10.2 -> 0 color-contrast violations, 86 passes (with the
+  workaround below), 30 incomplete (all "background gradient")
+- computed styles in-browser: all 5 changed elements rgb(163,163,163); all 5
+  borders rgb(64,64,64); underline rgba(192,132,252,0.7)
+- no horizontal overflow at 375px; all 30 reveals still reach opacity 1
+
+>>> AXE CANNOT MEASURE THIS PAGE UNTIL POLISH-001 LANDS. DO NOT TRUST A RAW
+>>> AXE RUN HERE. THIS WILL BITE A11Y-003 AND A11Y-004 TOO. <<<
+Run plainly, axe reports 86 color-contrast VIOLATIONS — and every one is a
+false positive. It reports things like fg=#d4d4d4 bg=#ffffff, i.e. it thinks
+the page background is WHITE and the light text fails against it. Cause:
+html and body are both rgba(0,0,0,0); the dark ground comes solely from the
+fixed z-[-1] div at src/App.jsx:13, and a contrast algorithm cannot attribute
+a separate fixed element as an element's background.
+
+That is precisely the defect POLISH-001 step 2 owns ("set bg-neutral-950 on
+body"). It is a ONE-LINE fix in index.css and it unblocks honest axe scanning
+for every remaining a11y item. POLISH-001 is sitting at priority 10; I would
+argue it is now effectively a prerequisite for A11Y-003/004/005/006 and worth
+promoting. I did not touch it — one item per loop.
+
+To get a real number I set document.body.style.backgroundColor='#0a0a0a' AT
+TEST TIME ONLY (source untouched); axe then returned 0 violations / 86 passes.
+
+HOW THE 30 "INCOMPLETE" NODES WERE VERIFIED WITHOUT AXE
+axe also gives up on 30 nodes with "background color could not be determined
+due to a background gradient" (the radial gradient on that same painter div).
+That set covers Hero, About and the Technologies heading — including the four
+About dt labels this item changed. So I measured the real thing instead:
+hid every element except the painter, screenshotted, and scanned all 1200x1530
+pixels for the brightest background on the page. It is rgb(35,35,53), top
+centre. Against that true worst case:
+    neutral-400 (the fix)      6.11:1 page / 6.54:1 card   needs 4.5  PASS
+    neutral-300 (body copy)   10.39:1                                 PASS
+    purple-400  (links)        5.83:1                                 PASS
+    neutral-500 (what I removed) 3.25:1                               FAIL
+So the defect was real and slightly worse than this item's flat-background
+estimate of 4.18:1. The kept "Me" needs only 3:1 at 36px and gets 3.25:1 — it
+passes, but with less headroom than 4.18 suggested. Don't reuse neutral-500
+anywhere smaller.
+
+>>> STEP 4 IS WRONG ON ITS OWN TERMS. I IMPLEMENTED IT ANYWAY. READ THIS. <<<
+Step 4 says to raise the card borders to border-neutral-700 to satisfy WCAG
+1.4.11's 3:1. It does not get there:
+    border-neutral-800 (before)  1.31:1 flat / 1.02:1 at the gradient peak
+    border-neutral-700 (after)   1.91:1 flat / 1.49:1   <-- still under 3:1
+    border-neutral-600           2.53:1 flat
+    border-neutral-500           4.18:1 flat / 3.25:1   <-- first one to clear
+I made the change as written because it is a genuine ~46% improvement in
+delineation and it is what the PRD asked for, but it is NOT a conformance fix
+and the notes no longer claim it is. Actually clearing 3:1 needs roughly
+neutral-500, which is a far more visible change than the "barely perceptible"
+the item promises — that is a design decision for the user, so I did not take
+it unilaterally. Two further corrections to the step's premise: the cards are
+not delineated by the border alone (they carry bg-neutral-900/40, though that
+fill is only 1.03:1 against the page, so it barely helps), and it is arguable
+whether 1.4.11 applies at all to decorative borders around static content
+rather than to UI component boundaries.
+
+STEP 7 (WAVE) NOT DONE: it runs against a deployed URL; this is not deployed.
+
+NOTES FOR WHOEVER IS NEXT
+- To force the GithubContributions error state, move public/github-contributions.json
+  aside and reload — that is how I verified it renders at neutral-400 for real.
+  I restored it byte-identical (cmp clean). The loading state shares an
+  identical class string, so it is covered by the same edit, but I did not
+  separately force it.
+- The page uses `scroll-behavior: smooth`, so a scripted scroll pass with
+  window.scrollTo will NOT trigger the IntersectionObserver reveals — the
+  smooth animation never arrives before your next step. Set
+  documentElement.style.scrollBehavior='auto' first, or use
+  scrollTo({behavior:'instant'}). I lost time to this; it silently left 20 of
+  30 reveals hidden and would have made an axe run look artificially clean.
+- axe-core is not a dependency. I loaded 4.10.2 from cdnjs with a script tag
+  at test time. Network works here. POLISH-003 owns adding it properly.
+- The GitHub heatmap still renders in GitHub's LIGHT palette (white/green) on
+  the dark background — visible in any screenshot of that section. Pre-existing
+  and flagged back in SEC-001's notes; A11Y-005 owns that area.
+- Still outstanding from earlier loops and STILL NOT DONE: SEC-001's Vercel
+  GITHUB_TOKEN env var and revoking the leaked token (it is still live), and
+  SEO-001's post-deploy og-image 200 check plus the LinkedIn/X re-scrape.
+
+SUGGESTED NEXT ITEM
+POLISH-001 out of priority order, for the reason above: its one-line body
+background fix is what makes axe usable, and A11Y-003/004/005/006 are all
+browserTest:true a11y items that will want it. Otherwise A11Y-003 (priority 5,
+global :focus-visible) is small and self-contained, or RENDER-002 (priority 5)
+which is still unblocked and pre-validated by RENDER-001.

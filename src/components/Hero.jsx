@@ -96,7 +96,7 @@ const Hero = () => {
         from="below"
         duration={0.6}
         delay={0.2}
-        className="mt-12 grid grid-cols-2 gap-6 border-t border-neutral-800 pt-8 lg:grid-cols-4 lg:gap-8"
+        className="mt-12 grid grid-cols-2 gap-6 border-t border-neutral-700 pt-8 lg:grid-cols-4 lg:gap-8"
       >
         {METRICS.map((metric) => (
           <div key={metric.label} className="text-center lg:text-left">

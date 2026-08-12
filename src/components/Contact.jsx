@@ -35,7 +35,7 @@ const Contact = () => {
         <Reveal as="p" from="below" duration={0.6} className="my-4">
           <a
             href={`mailto:${CONTACT.email}`}
-            className="border-b border-purple-400/40 text-lg text-purple-400 transition-colors hover:text-purple-300"
+            className="border-b border-purple-400/70 text-lg text-purple-400 transition-colors hover:text-purple-300"
           >
             {CONTACT.email}
           </a>
@@ -78,7 +78,7 @@ const Contact = () => {
           </a>
         </Reveal>
 
-        <p className="mt-16 text-sm text-neutral-500">
+        <p className="mt-16 text-sm text-neutral-400">
           © {new Date().getFullYear()} Dilsher Singh
         </p>
       </div>

@@ -41,10 +41,10 @@ const About = () => {
           distance={60}
           className="mt-8 w-full lg:mt-0 lg:w-2/5"
         >
-          <dl className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-6">
+          <dl className="rounded-xl border border-neutral-700 bg-neutral-900/40 p-6">
             {HIGHLIGHTS.map((item) => (
               <div key={item.label} className="mb-5 last:mb-0">
-                <dt className="text-xs uppercase tracking-widest text-neutral-500">
+                <dt className="text-xs uppercase tracking-widest text-neutral-400">
                   {item.label}
                 </dt>
                 <dd className="mt-1 text-neutral-300">{item.value}</dd>

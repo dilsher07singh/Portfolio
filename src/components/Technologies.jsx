@@ -39,7 +39,7 @@ const Technologies = () => {
   return (
     <section
       id="technologies"
-      className="scroll-mt-24 border-b border-neutral-800 pb-24"
+      className="scroll-mt-24 border-b border-neutral-700 pb-24"
     >
       <Reveal as="h2" duration={0.6} className="my-20 text-center text-4xl">
         Technologies
@@ -56,7 +56,7 @@ const Technologies = () => {
           return (
             <li
               key={tech.name}
-              className="flex items-center gap-2 rounded-xl border border-neutral-800 bg-neutral-900/40 px-4 py-3 transition-colors hover:border-purple-600/60"
+              className="flex items-center gap-2 rounded-xl border border-neutral-700 bg-neutral-900/40 px-4 py-3 transition-colors hover:border-purple-600/60"
             >
               {Icon ? (
                 <Icon className={`text-2xl ${tech.color}`} aria-hidden="true" />

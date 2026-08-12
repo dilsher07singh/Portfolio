@@ -35,7 +35,7 @@ const Projects = () => {
               className="block"
               aria-labelledby={`${titleId} ${newTabId}`}
             >
-              <div className="flex flex-wrap rounded-xl border border-neutral-800 bg-neutral-900/40 p-6 transition-colors duration-300 hover:border-purple-600/60 lg:justify-center">
+              <div className="flex flex-wrap rounded-xl border border-neutral-700 bg-neutral-900/40 p-6 transition-colors duration-300 hover:border-purple-600/60 lg:justify-center">
                 {/* Screenshot */}
                 <Reveal from="left" className="w-full lg:w-1/4">
                   <img

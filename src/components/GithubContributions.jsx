@@ -55,13 +55,13 @@ const GithubContributions = () => {
       </Reveal>
 
       {status === "loading" && (
-        <p className="mb-8 text-center text-neutral-500">
+        <p className="mb-8 text-center text-neutral-400">
           Loading contribution activity…
         </p>
       )}
 
       {status === "error" && (
-        <p className="mb-8 text-center text-neutral-500">
+        <p className="mb-8 text-center text-neutral-400">
           GitHub activity is unavailable right now —{" "}
           <a
             href="https://github.com/dilsher07singh"
