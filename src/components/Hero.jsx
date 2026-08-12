@@ -75,6 +75,15 @@ const Hero = () => {
             count as painted — until React has hydrated and the observer has
             fired. Rendering it plainly makes the largest paint happen on the
             very first frame, independent of when (or whether) JavaScript runs.
+
+            `fetchPriority` makes the prerender build print "React does not
+            recognize the fetchPriority prop". That warning is EXPECTED and
+            cosmetic: React DOM 18's server renderer has no fetchPriority in
+            its known-prop list (the client renderer does), but it still emits
+            the attribute, and the HTML parser lowercases attribute names, so
+            the browser sees fetchpriority="high" either way. Do not "fix" it
+            by lowercasing the JSX — that trades the warning for a
+            react/no-unknown-property lint ERROR. It resolves itself on React 19.
           */}
           <div className="flex justify-center">
             <img

@@ -582,3 +582,175 @@ background fix is what makes axe usable, and A11Y-003/004/005/006 are all
 browserTest:true a11y items that will want it. Otherwise A11Y-003 (priority 5,
 global :focus-visible) is small and self-contained, or RENDER-002 (priority 5)
 which is still unblocked and pre-validated by RENDER-001.
+
+--------------------------------------------------------------------------
+2026-08-12 — RENDER-002 (priority 5, rendering): the page is now prerendered
+             to static HTML — crawlers get 60KB of real content, not a shell
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+Tied at priority 5 with A11Y-003. Took RENDER-002 because it is by far the
+larger live defect: every search engine and every link-preview scraper hitting
+dilshersingh.com received a ~4KB shell whose <div id="root"> was EMPTY. All the
+SEO work in this PRD (meta tags, JSON-LD, og:image) was decorating a page with
+no body copy behind it. RENDER-001 had already done the hard prerequisite and
+pre-validated the risky part, so this was ready to go. A11Y-003 is a small
+self-contained CSS rule and stays clean as its own item — UNTOUCHED.
+
+WHAT WAS DONE
+- src/entry-server.jsx (new): exports render() = renderToString(<StrictMode><App/></StrictMode>).
+  Deliberately the SAME tree as main.jsx; a divergence there shows up as a
+  hydration mismatch, so the two are kept aligned on purpose.
+- src/main.jsx: createRoot -> hydrateRoot.
+- scripts/prerender.mjs (new): injects the rendered markup into the built
+  dist/index.html.
+- package.json build chain is now:
+    optimize-images && fetch-github && vite build
+      && vite build --ssr src/entry-server.jsx --outDir dist/server
+      && node scripts/prerender.mjs
+
+ZERO component rewrites were needed. Every component was already SSR-safe: the
+only browser globals anywhere in src/ were document.getElementById in main.jsx
+and Reveal.jsx's IntersectionObserver, and that one is inside useEffect AND
+behind a typeof guard. RENDER-001 earned that.
+
+RESULT: dist/index.html 3,997 bytes -> 60,454 bytes (56,437 chars injected).
+Note the PRD's "1212-byte shell" figure is STALE — the shell had already grown
+to 3,997 bytes once the meta/JSON-LD block landed. The defect was real and
+exactly as described; only the number was old.
+
+>>> THE BIG RISK WAS ASSET-HASH DRIFT. IT DID NOT HAPPEN — BUT CHECK IT FIRST
+>>> IF IMAGES EVER VANISH FROM THE PRERENDERED PAGE. <<<
+The client build and the SSR build hash assets independently. If they disagreed,
+the prerendered <img src> tags would point at files that do not exist and 404
+silently while the hydrated page looked fine. They agree: I extracted all 6
+/assets/ URLs from the prerendered HTML and confirmed every one resolves to a
+real file in dist/. Worth re-running after any Vite upgrade.
+
+TWO THINGS I ADDED BEYOND THE PRD STEPS, ON PURPOSE
+1. prerender.mjs deletes dist/server when it is done. dist/ is what Vercel
+   deploys, so leaving the SSR bundle there would publish a second full copy of
+   the application for no reason. It is a build intermediate.
+2. prerender.mjs FAILS THE BUILD on any problem — missing template, missing
+   root div, render() returning under 1000 chars. This is the OPPOSITE of the
+   convention fetch-github.mjs and optimize-images.mjs follow, and that is
+   deliberate: those two have a committed fallback and a GitHub outage should
+   not block a deploy. There is no fallback for prerendering. Degrading quietly
+   would ship the empty shell — precisely the defect this item exists to fix —
+   and nobody would notice for weeks.
+
+>>> HOW HYDRATION WAS ACTUALLY PROVEN. "NO CONSOLE ERRORS" IS NOT ENOUGH. <<<
+The preview build is a PRODUCTION React build, which strips most dev warnings,
+so an empty console is weak evidence that hydration worked rather than React
+silently throwing the server HTML away and client-rendering.
+What I did instead: an addInitScript MutationObserver grabs a reference to the
+prerendered <h1> the instant the PARSER creates it. After hydration, that
+captured node is === the live h1, is still isConnected, and carries a
+__reactFiber key. React attached to the server markup. That is decisive.
+FIRST ATTEMPT WAS BROKEN AND LOOKED LIKE A PASS: I observed
+document.documentElement, which is null at document_start, so the observer never
+installed and cheerfully reported "0 mutations". Observe `document`, not
+documentElement. Also note a raw added/removed node count is useless here —
+it counts the HTML parser building the prerendered DOM (428 additions), not
+React. Identity is the signal.
+Exactly ONE node is removed during hydration, a <p>: the GithubContributions
+loading paragraph swapping to the ready state. That is PRD step 6 working.
+Confirmed in dist/index.html: "Loading contribution activity" appears once,
+"contributions in the last year" appears zero times.
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems
+- yarn build -> pass
+- step 7:  grep -c 'Senior full stack engineer' dist/index.html   -> 4
+- step 8:  wc -c dist/index.html                                  -> 60,454
+- step 9:  all 7 headings present in the static HTML
+- step 10: JS DISABLED — h1 + all 6 h2 at computed opacity 1, html.className
+           empty (the inline js script never runs), 0 of 30 reveals hidden
+- step 11: 0 hydration errors; only console error is the pre-existing
+           fonts.googleapis.com cert failure (sandbox firewall)
+- step 12: Projects nav link scrolls 0 -> 3263px; heatmap populates after
+           hydration with 368 cells and "1,582 contributions in the last year"
+- no secrets in the prerendered HTML: 0 hits for ghp_ / github_token / authorization
+- RENDER-001 step 7, runnable for real at last:
+           grep -o 'opacity:0' dist/index.html | wc -l               -> 0
+
+NO FLASH OF CONTENT — the main visual risk of prerendering, checked properly.
+Until now #root was empty, so there was nothing that COULD flash. Now the
+markup is in the HTML, it could in principle paint visible and then be hidden
+by the `.js .reveal` rule. It does not: sampling the h1's computed opacity every
+frame from document_start shows 0 on the very first frame it exists (119ms),
+rising monotonically to 1, with no 1-then-lower transition anywhere in 175
+samples. RENDER-001's synchronous inline head script does exactly its job.
+
+PERF-002 NOT REGRESSED (I checked rather than assuming): LCP 156/180/112ms over
+3 runs, each EQUAL to FCP, LCP element still the hero IMG, CLS 0. That is at or
+better than PERF-002's recorded 368/156/137, which makes sense — the image now
+ships in the initial HTML instead of waiting for JS to inject it.
+
+>>> EXPECTED BUILD WARNING. DO NOT "FIX" IT. <<<
+The prerender step prints:
+  "React does not recognize the fetchPriority prop ... spell it as lowercase"
+This is cosmetic and the attribute is fine. React DOM 18's SERVER renderer has
+no fetchPriority in its known-prop list (the CLIENT renderer does — that is why
+this never appeared before prerendering). It still emits the attribute, and the
+HTML parser lowercases attribute names, so the browser reads fetchpriority="high"
+and PERF-002's preload hint is intact — verified in dist/index.html.
+I tried lowercasing the JSX. It silences the warning and immediately trades it
+for a `react/no-unknown-property` LINT ERROR, which is a hard gate. So the
+camelCase spelling stays and there is a comment in Hero.jsx explaining why.
+React 19 makes this go away by adding the real prop.
+
+>>> SOMEONE FLIPPED EVERY browserTest FLAG TO false. NOT ME. COMMITTED SEPARATELY. <<<
+The working tree arrived with an uncommitted prd.json change setting
+"browserTest": true -> false on all 10 items that had it, with no commit and no
+progress.txt entry explaining it. Every remaining item now says browserTest:false,
+i.e. code inspection is formally sufficient for all of them.
+I did not make that change and I did not revert it — but I refused to bury it
+inside this feature's commit, so it is its own commit (see git log). If that was
+deliberate (plausible: Playwright was reported dead two loops ago), fine. If it
+was accidental, revert that one commit. Either way it is now visible in history.
+For the record I browser-verified RENDER-002 anyway despite its false flag —
+hydration is a runtime property and cannot be established by reading source.
+
+ENVIRONMENT GOTCHA #4 IN A ROW ON THIS REPO
+`yarn build` failed on arrival with "Cannot find module @rollup/rollup-linux-arm64-gnu".
+This is the PERF-002 entry's gotcha in reverse: that loop ran on darwin-arm64 and
+installed darwin binaries; we are back on linux-arm64. `yarn install --force`
+fixed it in 11s and this time produced ZERO yarn.lock diff. The pattern is now
+unmistakable — IF A GATE FAILS ON THIS REPO, CHECK THE TOOLCHAIN BEFORE THE CODE.
+Also: a stale `vite preview` (PID 7209) from a previous loop was again squatting
+on port 3000 serving an OLD dist/. I killed it before verifying anything. Same
+trap the A11Y-001 loop hit. `ps aux | grep vite` before you trust localhost:3000.
+
+NOTES FOR WHOEVER IS NEXT
+- src/entry-server.jsx and src/main.jsx must render the IDENTICAL tree. If you
+  add a provider (MotionConfig, a theme context, a router), add it to BOTH or
+  you get a hydration mismatch that production React will not clearly report.
+- Any new component must stay SSR-safe: no window/document/localStorage at
+  module scope or in a render body. Put it in useEffect. The build will throw
+  at the `vite build --ssr` step if you get this wrong, which is the good case;
+  the bad case is a component that reads window only on some paths.
+- GithubContributions SSRs its loading state by design. If you later want the
+  heatmap in the static HTML for SEO, it would have to read
+  public/github-contributions.json at build time instead of via fetch.
+- prerender.mjs matches the literal string '<div id="root"></div>'. If you edit
+  the root element in index.html, update ROOT_DIV in that script — it fails
+  loudly rather than silently prerendering into nowhere.
+- POLISH-001's 404 page is unaffected by this: public/ is copied verbatim and
+  is not touched by the prerender step.
+- STILL OUTSTANDING FROM EARLIER LOOPS, STILL NOT DONE, ALL HUMAN ACTIONS:
+  SEC-001's Vercel GITHUB_TOKEN env var; REVOKING THE LEAKED GITHUB TOKEN (it
+  is still live and still in the deployed bundle); SEO-001's post-deploy
+  og-image 200 check plus the LinkedIn/X re-scrape. RENDER-002 adds one more:
+  after deploying, confirm
+    curl -s https://www.dilshersingh.com | grep -c 'Senior full stack'
+  returns at least 1. That is the proof the SEO defect is actually gone in prod.
+
+SUGGESTED NEXT ITEM
+A11Y-003 (priority 5, global :focus-visible) is now the highest-priority open
+item and is small and self-contained. After that, SEO-002 (priority 6) is a
+single <meta name="keywords"> deletion.
+Still worth considering out of order: POLISH-001 (priority 10). The A11Y-002
+loop's finding stands — axe cannot measure contrast on this page until the body
+background is set, and A11Y-004/005/006 are all a11y items that will want a
+trustworthy axe run.
