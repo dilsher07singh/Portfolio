@@ -21,6 +21,26 @@ html {
 }
 
 /*
+  Global keyboard focus ring.
+
+  Nothing in the codebase suppresses outlines, but the browser default ring is
+  a thin dark line that is close to invisible against the #0a0a0a page. One
+  global rule covers every interactive element at once, so any link or button
+  added later is focus-visible by default rather than by remembering to style
+  it individually.
+
+  purple-400 (#c084fc) reuses the site's existing focus/hover accent and clears
+  3:1 against both the page background and the bg-neutral-900 cards. It sits in
+  @layer base so a component can still override it with a Tailwind utility.
+*/
+@layer base {
+  :focus-visible {
+    outline: 2px solid #c084fc;
+    outline-offset: 2px;
+  }
+}
+
+/*
   Entry reveals.
 
   Additive by design: an element stays visible unless all three of these hold —

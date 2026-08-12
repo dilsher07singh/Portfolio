@@ -754,3 +754,147 @@ Still worth considering out of order: POLISH-001 (priority 10). The A11Y-002
 loop's finding stands — axe cannot measure contrast on this page until the body
 background is set, and A11Y-004/005/006 are all a11y items that will want a
 trustworthy axe run.
+
+--------------------------------------------------------------------------
+2026-08-12 — A11Y-003 (priority 5, accessibility): global :focus-visible
+             ring — and the container that was quietly clipping it
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+Highest-priority item still open (priority 5). The previous loop suggested
+jumping to POLISH-001 out of order because axe cannot measure contrast on this
+page until the body background is set — but A11Y-003's steps are Tab-based and
+pixel-based, not axe-based, so nothing about it was blocked. Took it in
+priority order. POLISH-001 remains UNTOUCHED and its argument still stands for
+whoever takes A11Y-004/005/006.
+
+WHAT WAS DONE
+- src/index.css: `:focus-visible { outline: 2px solid #c084fc; outline-offset:
+  2px }` inside @layer base, so a Tailwind utility can still override it
+  per-element if that is ever needed.
+- src/components/Navbar.jsx: `p-1 -m-1 scroll-p-1` on the nav <ul>. This is NOT
+  cosmetic — see below. It is what makes the ring actually visible on 5 of the
+  20 tab stops.
+
+Both of the item's premises checked out before I started: `grep -rc
+'outline-none' src/ index.html` = 0, and exactly one authored focus style
+existed (Navbar's colour-only `focus-visible:text-purple-400`). That one is
+additive, not a suppression, so I left it — the link now changes colour AND
+gets a ring.
+
+>>> THE ONE-LINE RULE WAS NOT ENOUGH. A SCROLL CONTAINER WAS EATING THE RING. <<<
+This is the part worth reading, because the same trap is waiting in the
+heatmap wrapper and in anything else that gets overflow-* added later.
+
+The navbar <ul> has `overflow-x-auto`. That makes it a SCROLL CONTAINER, and a
+scroll container CLIPS its children — including an outline, which is painted
+outside the border box. With `outline-offset: 2px` the ring occupies the band
+from 2px to 4px outside the link. The <ul> is exactly as tall as its links, so
+that entire band was clipped: the 5 nav links rendered with their LEFT AND
+RIGHT BARS ONLY, no top or bottom. Measured (ring 16->40 vs clip box 18->38,
+cut 2px each side) and then confirmed by eye in a zoomed screenshot — it looks
+like two floating vertical dashes, not a focus ring. The first and last links
+also lost their outer bar, having no horizontal room.
+
+Fix on the <ul>:
+  p-1        gives the clip box 4px of headroom on all four sides
+  -m-1       cancels that padding so navbar LAYOUT is unchanged
+             (header height still 57px at 1280 and 118px at 375, measured
+             before and after)
+  scroll-p-1 keeps that room in view when tabbing scrolls a link horizontally
+If you ever change this <ul>, keep the padding/negative-margin pair together or
+the ring silently goes back to being half-drawn.
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems
+- yarn build -> pass (only warning is the documented fetchPriority SSR one that
+  RENDER-002's notes explicitly say not to "fix")
+- step 2: `grep -rc 'outline-none' src/ index.html` -> 0
+- built CSS contains :focus-visible{outline:2px solid #c084fc;outline-offset:2px}
+- step 3: full Tab sweep at 1280x800, 780x493 AND 375x700 — every stop reports
+  outline-width 2px, style solid, color rgb(192,132,252), offset 2px
+- clipping: wrote a generic ancestor-walk check (any ancestor whose overflow is
+  not `visible`, compare its rect against the ring rect) -> 0 clipped rings at
+  1280 and 780 after the fix
+- step 4: focus never trapped (sweep terminates back at body/browser UI), no
+  stop lands off the top of the viewport or under the header
+- step 5: contrast MEASURED FROM PIXELS, not assumed — 7.49:1 on the page
+  background rgb(10,10,10), 7.25:1 on the card fill rgb(15,15,15), 7.12:1 in
+  the navbar/gradient area rgb(17,17,22). Floor is 3:1 (WCAG 1.4.11). The
+  item's own 7.49:1 estimate is confirmed exactly.
+- mouse users unaffected: clicking a link paints no ring (in this browser the
+  anchor is not even focused by a click, and :focus-visible would not match
+  anyway), so the visual design is unchanged for pointer users
+
+HOW THE CONTRAST WAS MEASURED, since a naive version of this LIES
+First attempt reported a 1.06:1 "worst case" and looked like a hard fail. That
+was my own classifier catching the ring's ANTI-ALIASED EDGE pixels — rgb(197,
+161,232) is blended ring, not background. If you measure ring-vs-background by
+sampling neighbours, you must exclude the blend band first (I required the
+neighbour to be non-purple, blue-minus-green <= 18). Same class of mistake as
+the axe false positives in the A11Y-002 entry: the tool was measuring something
+real, just not the thing I was asking about.
+
+>>> TWO CORRECTIONS TO THIS ITEM'S PREMISES <<<
+1. "all 15 interactive elements" — there are 19 tab stops at 1280x800 and 20 at
+   narrow widths. The extra one is not an authored control: it is the GitHub
+   heatmap's `overflow-x-auto` wrapper DIV, which Chrome makes implicitly
+   keyboard-focusable so a keyboard user can scroll it. That is correct
+   behaviour and it now gets a ring too. Do not "fix" it by adding tabindex=-1;
+   that would remove a keyboard user's only way to scroll the heatmap.
+2. Pre-existing, NOT introduced here, and NOT fixed: at 375px the nav list
+   overflows its container and Chrome does not scroll that nested horizontal
+   container when focus enters it (ulScrollLeft stays 0), so the last link
+   "Contact" sits 11px past the container edge with its right bar cut. I
+   restored the pre-change class list at runtime and re-measured: the nav
+   ALREADY overflowed by 7px at 375px, so that link's own TEXT was already
+   clipped before this item existed. Forcing the container to its scroll end
+   makes the ring fit exactly (0.1px overhang), so the room is there — only the
+   browser's focus-scroll is missing. Fixing it properly means changing how the
+   nav sizes or wraps at narrow widths, which is a design decision, so I did
+   not take it unilaterally.
+
+>>> UNRELATED LIVE BUG FOUND WHILE MEASURING. NOT MINE, NOT FIXED, READ IF YOU
+>>> OWN A11Y-004 OR POLISH-001. <<<
+THE STICKY HEADER DOES NOT STICK. It is `position: sticky; top: 0` and it
+computes as sticky, but it scrolls away with the page: at scrollY 1500 the
+header's bounding rect top is -1500.
+Cause: the App root div (src/App.jsx:12) has `overflow-x-hidden`, and a
+computed overflow-x of `hidden` forces overflow-y to `auto`. That makes the
+root div the nearest scrolling ancestor, so the header sticks relative to a box
+that itself never scrolls (rootScrollTop stays 0 while document.scrollingElement
+scrollTop is 1500). Classic overflow-breaks-sticky trap.
+Why it matters to the PRD as written:
+- A11Y-004 step 2 says to position the skip link "so it does not overlap the
+  sticky header". Today there is no sticky header to overlap once you scroll.
+- POLISH-001 step 2 already touches this exact architecture (moving the
+  background off the fixed z-[-1] div and onto body). Whoever does that is
+  standing in the right place to also reconsider the root's overflow-x-hidden.
+I did not touch it: it is a visible layout/design change and it is not this
+item's scope. But it is a genuine live defect and no PRD item currently owns it.
+Silver lining for A11Y-003: it means nothing can occlude a focus ring.
+
+NOTES FOR WHOEVER IS NEXT
+- Environment was CLEAN this time — first loop in a while. node_modules/.bin
+  populated, no stale server squatting on port 3000, lint and build worked on
+  arrival. The gotcha streak (entries above: empty .bin, npm rewriting
+  yarn.lock, wrong-platform rollup/sharp binaries twice) did not repeat, but
+  still check `ps aux | grep vite` before trusting localhost:3000.
+- I used the dev server, not `vite preview`, so the page reflects source
+  directly. Fine for a CSS rule; use preview if you need the prerendered HTML.
+- The ring inherits border-radius automatically, so rounded cards get a rounded
+  ring with no extra work.
+- Still outstanding from earlier loops, ALL STILL NOT DONE, all human actions:
+  SEC-001's Vercel GITHUB_TOKEN env var and REVOKING THE LEAKED TOKEN (still
+  live); SEO-001's post-deploy og-image 200 check plus the LinkedIn/X
+  re-scrape; RENDER-002's post-deploy `curl -s https://www.dilshersingh.com |
+  grep -c 'Senior full stack'`.
+
+SUGGESTED NEXT ITEM
+SEO-002 (priority 6) is now the highest-priority open item and is a single
+<meta name="keywords"> deletion in index.html — genuinely a few minutes.
+SEO-003 (priority 7) is the natural pairing since it is also index.html head
+work, and PERF-003 step 1 depends on SEO-003's preconnect hints.
+Still worth promoting out of order: POLISH-001 (priority 10). Its one-line body
+background fix unblocks honest axe runs for A11Y-004/005/006, and the sticky
+header finding above sits in the same file.

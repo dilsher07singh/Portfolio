@@ -59,7 +59,16 @@ const Navbar = () => {
         </a>
 
         {/* Section anchors */}
-        <ul className="flex max-w-full items-center gap-5 overflow-x-auto text-sm text-neutral-400">
+        {/*
+          `overflow-x-auto` makes this a scroll container, which clips its
+          children — including the 2px focus ring and its 2px offset. Without
+          headroom the ring loses its top and bottom bars outright, and the
+          first and last links lose their outer bar. `p-1` gives the clip box
+          the 4px the ring needs on every side and `scroll-p-1` keeps that
+          room in view when tabbing scrolls a link horizontally; the matching
+          `-m-1` cancels the padding so the navbar's layout is unchanged.
+        */}
+        <ul className="-m-1 flex max-w-full items-center gap-5 overflow-x-auto scroll-p-1 p-1 text-sm text-neutral-400">
           {NAV_LINKS.map((link) => (
             <li key={link.href}>
               <a
