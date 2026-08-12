@@ -2011,3 +2011,143 @@ expect step 1 to be unsatisfiable as literally written. Its 335KB baseline is
 also stale — the bundle is 188KB today for the same reason.
 Then POLISH-003 (15, toolchain) and CONTENT-001 (16, a docs-only deliverable
 that must not touch src/).
+
+--------------------------------------------------------------------------
+2026-08-12 — PERF-004 (priority 14, performance): vendor chunks split, and
+             the dead framer-motion dependency finally removed
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+Highest-priority item still open (14). Only POLISH-003 (15) and CONTENT-001
+(16) remain after it, so this was the last piece of bundle work. The previous
+loop's warning about step 1 was exactly right and is confirmed below.
+
+WHAT WAS DONE
+- vite.config.js: manualChunks splitting react/react-dom/scheduler and
+  react-icons into vendor chunks. The config is now a function form so it can
+  read `isSsrBuild`.
+- package.json + yarn.lock: framer-motion removed.
+- ZERO source files changed. `git diff --name-only src/` is empty.
+
+RESULT
+  before   index          188.24 kB raw / 63.82 kB gzip   (one chunk)
+  after    react-vendor   141.80 kB raw / 45.40 kB gzip
+           icons-vendor    22.50 kB raw /  9.01 kB gzip
+           index (app)     24.19 kB raw /  9.50 kB gzip
+
+>>> THIS ITEM'S OWN NUMBERS ARE STALE. DO NOT QUOTE STEP 4'S BASELINE. <<<
+The description says 335KB / 112KB gzipped. That predates RENDER-001, which
+removed the last framer-motion import and cut it to 188.24 kB / 63.82 kB.
+Step 4 asks that gzip "not increase relative to the current 112KB baseline" —
+which would pass trivially against a number that is 48KB too big. I measured
+the REAL before/after instead: 63,822 -> 63,920 bytes, +98 bytes (+0.15%).
+That is per-chunk framing overhead and is genuinely not meaningful.
+
+Step 3 deserves the same care. "No chunk exceeds 150KB raw" was FAILING
+BEFORE this item, at 188.24 kB. Splitting is what makes it true; it is not a
+property that already held. It passes now, but react-vendor sits at 141.80 kB
+with only ~8KB of headroom. A React 19 upgrade could breach it — the fix then
+is to split react-dom out from react, not to raise the ceiling.
+
+>>> STEP 1 ASKS FOR A CHUNK THAT CANNOT EXIST. HERE IS HOW I RESOLVED IT. <<<
+framer-motion has not been imported since RENDER-001. `grep -rn framer-motion
+src/ index.html scripts/` returns 4 hits and ALL FOUR ARE COMMENTS
+(src/index.css:99, src/components/Reveal.jsx:9/34/78). Rollup never saw the
+package, so a manualChunks entry for it emits nothing.
+RENDER-001's notes explicitly deferred this decision to PERF-004, so I took it:
+`yarn remove framer-motion` (YARN, not npm — see the npm-rewrites-yarn.lock
+warning in the PERF-001 entry). The lockfile diff is 7 deleted lines, the
+framer-motion entry alone. tslib stays; another package still needs it.
+It was 3.7MB in node_modules and 0 bytes in the bundle, so this changes install
+time only. Proof it was truly unbundled: all three chunk hashes are
+BYTE-IDENTICAL before and after the removal.
+
+ONE FALSE POSITIVE THAT WILL WASTE YOUR TIME IF YOU RE-CHECK THIS
+`grep -i framer dist/assets/*.js` MATCHES. It is not framer-motion — it is
+`unstable_forceFrameRate` ("FrameR") inside React's scheduler. Match
+case-sensitively, or print the context before believing it.
+
+>>> THE ACTUAL POINT OF THIS ITEM IS NOT IN ANY OF ITS STEPS. I MEASURED IT. <<<
+Steps 2-4 only count files and bytes; nothing tests the caching claim that
+justifies the item. So I rebuilt after a real source edit and diffed the
+emitted filenames:
+  index-Bkvt-VHm.js  ->  index-DErpGQli.js     (rotated)
+  react-vendor-DJwEGQ5P.js                     (identical)
+  icons-vendor-6OzOH3Cg.js                     (identical)
+A returning visitor now re-downloads 9.50 kB gzip per deploy instead of
+63.82 kB — an 85% reduction. That is the whole item, and it is now evidenced.
+FIRST ATTEMPT AT THIS SILENTLY PROVED NOTHING: I appended a COMMENT to
+App.jsx, which minification strips, so the output was byte-identical and all
+three hashes held — which reads exactly like a pass. Use a change that
+survives minification (I changed a className string). App.jsx was restored.
+
+TWO DESIGN CALLS
+1. react, react-dom and scheduler deliberately SHARE one chunk. react-dom
+   imports scheduler; separating them creates a cross-chunk cycle for no gain.
+2. The SSR build is deliberately NOT split, via the `isSsrBuild` guard.
+   dist/server is a build intermediate that prerender.mjs imports once and then
+   deletes (RENDER-002 set that up), so chunking it adds module-resolution work
+   for zero caching benefit. Confirmed dist/server/entry-server.js is still a
+   single 36.90 kB file.
+   Matching is on PATH SEGMENTS (`/node_modules/<pkg>/`), not bare substrings,
+   so a package that merely contains one of these names cannot be swept into
+   the wrong chunk.
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems
+- yarn build -> pass (only the documented fetchPriority SSR warning)
+- step 2: dist/assets/*.js count -> 3
+- step 3: find dist/assets -name '*.js' -size +150k | wc -l -> 0
+- step 4: total gzip 63,822 -> 63,920 bytes (+0.15%)
+- prerender still injects 56,540 chars — byte-for-byte what A11Y-006 recorded,
+  i.e. the static HTML is completely unaffected
+- all 8 /assets/ URLs referenced by dist/index.html resolve to real files
+  (RENDER-002's asset-hash-drift check, re-run because this item changes how
+  assets are emitted)
+
+STEP 5 NEEDED A BROWSER EVEN THOUGH browserTest IS false
+A bad manualChunks split fails at module-init time, not at build time, so
+"it builds" is not evidence. Verified on `vite preview` (the built bundle):
+- all 3 chunks 200; github-contributions.json 200
+- hydration confirmed by a __reactFiber key on the PRERENDERED h1
+- heatmap populated: 368 cells, aria-label "1,582 contributions over the last
+  year", loading state gone
+- 7 named regions with the right headings; 1 contentinfo
+- all 5 images loaded (naturalWidth > 0) after a full instant-scroll pass
+- 30 reveals, 0 stranded; no horizontal overflow
+- 26 svgs rendering, which is what proves icons-vendor actually executed
+- nav anchor click still scrolls 0 -> 4002
+- Vite emits modulepreload hints for BOTH vendor chunks, so the split adds no
+  request waterfall — checked in dist/index.html
+- only console error is the pre-existing fonts.googleapis.com cert failure
+DO NOT PANIC AT THESE TWO NUMBERS: docHeight 6605 and scroll 4002, versus the
+5435 / 3263 earlier loops recorded. My viewport was 780x493, not 1280x800.
+JS chunking cannot move layout.
+
+NOTES FOR WHOEVER IS NEXT
+- Environment was CLEAN for the fifth loop running: .bin populated, correct
+  platform binaries, nothing squatting on port 3000. The gotcha streak is over.
+  I killed my preview server and left no worktrees.
+- If you upgrade Vite or React, re-run the asset-URL check above. Splitting
+  makes hash drift between the client and SSR builds more consequential, not
+  less.
+- POLISH-003 (15) is next and is the last code item. Note its step 1 is a real
+  decision, not a mechanical fix: either install Vitest + Playwright and write
+  actual typecheck/test scripts, or point plans/ralph.sh and plans/ralph-once.sh
+  at `yarn lint` and `yarn build`. Also note its step 3 wants
+  react/jsx-no-target-blank re-enabled — A11Y-001 confirmed all 4 external
+  links already carry rel="noopener noreferrer", so that should be free.
+- CONTENT-001 (16) is docs-only and must leave src/ untouched.
+- STILL OUTSTANDING FROM EARLIER LOOPS, ALL HUMAN ACTIONS, NONE DONE:
+  SEC-001's Vercel GITHUB_TOKEN env var; REVOKING THE LEAKED GITHUB TOKEN (it
+  is still live and still in the deployed bundle); SEO-001's post-deploy
+  og-image 200 check plus the LinkedIn/X re-scrape; PERF-003's post-deploy
+  Cache-Control checks; RENDER-002's post-deploy
+  `curl -s https://www.dilshersingh.com | grep -c 'Senior full stack'`.
+- Still unowned by any PRD item: the sticky header does not stick (diagnosis in
+  the A11Y-003 entry), and the heatmap is a solid white rectangle in
+  forced-colors mode (A11Y-005 entry).
+
+SUGGESTED NEXT ITEM
+POLISH-003 (priority 15), then CONTENT-001 (16). The PRD is NOT complete —
+those two are still open.
