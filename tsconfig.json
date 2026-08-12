@@ -1,0 +1,23 @@
+{
+  // The project is plain JSX — there is no TypeScript source and this config
+  // emits nothing. `checkJs` turns tsc into a type-aware linter over the
+  // existing .js/.jsx/.mjs files, which is what `yarn typecheck` runs.
+  // `vite/client` is what declares the `.css` / `.webp` / `.png` module shims,
+  // so the asset imports in src/ resolve here the same way they do in a build.
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "types": ["vite/client", "node"]
+  },
+  "include": ["src", "scripts", "*.js", "*.config.js"]
+}

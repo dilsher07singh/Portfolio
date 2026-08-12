@@ -43,6 +43,21 @@ const DEFAULT_DISTANCE = {
  *   duration  transition length in seconds, default 0.5.
  *   delay     transition delay in seconds, default 0.
  * Any remaining props are spread onto the rendered element.
+ *
+ * The prose above is the contract; the typedef below is the same contract in a
+ * form `yarn typecheck` can read. `as` is deliberately `any` — it is a
+ * polymorphic tag, and narrowing it would make the `ref` below unassignable.
+ *
+ * @typedef {Object} RevealProps
+ * @property {any} [as]
+ * @property {"above" | "below" | "left" | "right" | "fade"} [from]
+ * @property {number} [distance]
+ * @property {number} [duration]
+ * @property {number} [delay]
+ * @property {string} [className]
+ * @property {import("react").ReactNode} [children]
+ *
+ * @param {RevealProps & Record<string, any>} props
  */
 const Reveal = ({
   as: Tag = "div",

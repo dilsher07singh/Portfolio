@@ -2151,3 +2151,147 @@ NOTES FOR WHOEVER IS NEXT
 SUGGESTED NEXT ITEM
 POLISH-003 (priority 15), then CONTENT-001 (16). The PRD is NOT complete —
 those two are still open.
+
+--------------------------------------------------------------------------
+2026-08-12 — POLISH-003 (priority 15, tooling): the gate is now
+             lint + typecheck + test + build, and all four pass
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+Highest-priority item still open. Only CONTENT-001 (16) is left after this,
+and it is docs-only and must not touch src/ — so this was the last code item.
+
+>>> THE ITEM'S OWN PREMISE IS STALE. I CHECKED INSTEAD OF TRUSTING IT. <<<
+The description says "the ralph.sh automation loop invokes `npm run typecheck`
+and `npm run test`". It does not, and as far as the files on disk go it never
+did:
+    grep -rn 'typecheck\|npm run' plans/ *.sh
+matches ONLY prd.json's own text for this item. Both shell scripts' gate line
+read `a. Lint: yarn lint (must pass)`. So the loop was never calling missing
+scripts — the real defect was that lint was the ONLY gate.
+
+WHAT WAS DONE — step 1 implemented as BOTH halves, not either/or
+The scripts now exist for real AND both shell files were updated to run them:
+  a. Gates: yarn lint && yarn typecheck && yarn test (all three must pass)
+NOTE: plans/ralph.sh and plans/ralph-once.sh are UNTRACKED in git (plans/prd.json
+is the only tracked file under plans/). That edit is on disk but is NOT in this
+commit — several loops have passed without committing the user's local harness
+and I did not unilaterally start. If you want it in history, `git add` them.
+
+- package.json: + "typecheck": "tsc --noEmit", + "test": "vitest run",
+  + "test:watch": "vitest", + engines "22.x". New devDeps: vitest, jsdom,
+  @testing-library/{react,dom,jest-dom}, typescript, @types/node,
+  eslint-plugin-jsx-a11y. eslint-plugin-react-hooks 5.1.0-rc.0 -> ^5.2.0.
+- tsconfig.json (new), vitest.config.js (new), src/test-setup.js (new),
+  src/__tests__/{landmarks,accessible-names,github-contributions}.test.jsx (new).
+- .nvmrc (new): 22.
+- eslint.config.js: jsx-a11y recommended spread in; the
+  `react/jsx-no-target-blank: 'off'` line DELETED; file glob widened to .mjs;
+  node globals for scripts/, browser+node globals for the test files.
+- src/components/Reveal.jsx: a JSDoc @typedef. Required — see below.
+- README.md: fully rewritten from create-vite boilerplate.
+
+FEEDBACK LOOPS — all green, exit codes captured rather than eyeballed
+- yarn lint      -> 0
+- yarn typecheck -> 0
+- yarn test      -> 0   (15 tests, 3 files)
+- yarn build     -> 0   (only the documented fetchPriority SSR warning)
+
+>>> VITEST 3 AND 4 DO NOT WORK HERE. DON'T REPEAT THE 20 MINUTES. <<<
+- vitest 4 requires vite ^6; this repo is on vite 5.
+- vitest 3 installs a nested esbuild 0.28.2 whose linux-arm64 binary SIGSEGVs
+  in this sandbox — `yarn add` dies in esbuild's postinstall version check.
+  esbuild 0.21.5 (what vite 5 pins) runs fine. So: vitest 2.1.9.
+  If a future loop moves to vite 6, test that binary BEFORE assuming vitest 4
+  installs.
+- jsdom is pinned ^26 because jsdom 30 demands node ^22.22.2 and we are on
+  22.22.1. yarn refuses the install outright, it does not warn.
+- vitest also pulled its OWN nested vite 5.4.21 next to the root 5.4.3, which
+  made tsc fail in vitest.config.js with two structurally identical but
+  nominally different `PluginOption` types. Fixed properly with
+  `yarn upgrade vite` (5.4.3 -> 5.4.21, still inside the existing ^5.4.1 range)
+  so there is ONE vite — not by casting the plugin to `any`. Build re-verified
+  after that bump; rollup went to 4.62.4 and its native binary is fine here.
+
+TYPECHECK IS REAL, NOT A NO-OP — AND I PROVED IT
+tsconfig.json is allowJs + checkJs + noEmit, i.e. tsc as a type-aware linter
+over the existing JS/JSX/MJS. `tsc --listFiles` shows 23 project files covered,
+including all four scripts/*.mjs. Negative control: I inserted
+`const __probe = 1; __probe.toUpperCase()` into Reveal.jsx and tsc failed with
+TS2339, then reverted it. `types: ["vite/client"]` is what makes the .css and
+.webp imports resolve.
+Getting to zero needed ONE source edit, and it is worth understanding before
+you touch Reveal.jsx: `distance` is the only prop with no default, so inference
+made it REQUIRED and all 21 call sites failed TS2741; separately `ref` on the
+polymorphic `<Tag>` failed TS2322. A JSDoc @typedef fixes both. `as` is typed
+`any` deliberately — narrow it and the ref error comes straight back.
+
+BOTH NEW LINT GUARDRAILS WERE NEGATIVE-CONTROLLED
+A throwaway component with `target="_blank"` and no rel, an `<img>` with no
+alt, and an onClick on a div produced 4 errors across react/jsx-no-target-blank
+and jsx-a11y (alt-text, click-events-have-key-events,
+no-static-element-interactions). Neither plugin is passing vacuously.
+ALSO WORTH KNOWING: `files: ['**/*.{js,jsx}']` never matched .mjs, so all four
+build scripts were being linted with ZERO rules — `eslint .` was reporting
+success on files it was not checking. They now get all 120 rules and passed
+unmodified.
+
+WHAT THE 15 TESTS GUARD, AND WHY THESE
+Deliberately the invariants that are invisible on screen and therefore regress
+silently — which is to say, this PRD's own accessibility work:
+- 7 regions, named via aria-labelledby, in document order
+- exactly 1 contentinfo, and NOT inside <main> (a nested footer is not one)
+- the skip link is the first focusable element; #main has tabindex="-1"
+- 0 duplicate ids, 0 dangling idrefs
+- navbar logo alt="" and one link name; 0 non-aria-hidden svgs in the navbar
+- each Hero metric label appears exactly once, and as a <dt>
+- the 3 project link names, their target/rel, and the absence of the old
+  aria-label; chips carry no title attribute
+- the heatmap collapses to ONE role=img named by its total, cells aria-hidden
+- SEC-001's invariant: the contributions fetch is called with exactly ONE
+  argument. An options object is precisely how the Authorization header lived
+  there before, so this test fails the moment someone reintroduces one.
+
+NOTES FOR WHOEVER IS NEXT
+- Playwright is deliberately NOT installed as a project dependency. Every
+  browserTest flag in this PRD is false and every item is verified; a second
+  browser stack would be dead weight. The MCP browser tool is still how you
+  drive a real page. If you disagree, that is the remaining half of step 1.
+- `yarn test` prints the fetchPriority warning from Hero for two tests. Same
+  expected warning as the build (see RENDER-002's entry). I did NOT silence it
+  — a blanket console filter in test-setup.js would hide real React warnings.
+  Confirmed unchanged in the output: dist/index.html still has
+  fetchPriority="high"; grep for it case-INsensitively, the HTML keeps React's
+  camelCase and only the parser lowercases it. A lowercase grep returns 0 and
+  looks alarming.
+- Vitest replaces vite.config.js with vitest.config.js during a run; it does
+  not extend it. If you add an alias or a plugin the app needs, add it to both.
+- engines is "22.x", not ">=22.0.0 <23": Vercel parses that field itself and
+  rejects ranges it does not recognise.
+- eslint-plugin-react-hooks was moved to 5.2.0, NOT the latest 7.1.1. v6+
+  changes the flat-config export shape and adds react-compiler rules — that is
+  a migration with real churn, not a de-RC, and step 4 only asked for stable.
+- NO REGRESSION IN SHIPPED OUTPUT: prerender still injects 56,540 characters,
+  byte-for-byte the figure A11Y-006 recorded, 'Senior full stack engineer' x4,
+  0 inline opacity:0.
+- Housekeeping you will notice in `ls -a` and may wonder about: four EMPTY
+  directories named `--permission-mode`, `-p`, `acceptEdits` and `@plans` are
+  sitting in the repo root, evidently from a botched `claude`/ralph invocation
+  in an earlier session. Git ignores empty dirs so they never show in
+  `git status`. Harmless, not mine, not deleted — but they are junk and you can
+  `rmdir` them safely.
+- STILL OUTSTANDING FROM EARLIER LOOPS, ALL HUMAN ACTIONS, NONE DONE:
+  SEC-001's Vercel GITHUB_TOKEN env var; REVOKING THE LEAKED GITHUB TOKEN (it
+  is still live and still in the deployed bundle); SEO-001's post-deploy
+  og-image 200 check plus the LinkedIn/X re-scrape; PERF-003's post-deploy
+  Cache-Control checks; RENDER-002's post-deploy
+  `curl -s https://www.dilshersingh.com | grep -c 'Senior full stack'`.
+- Still unowned by any PRD item: the sticky header does not stick (diagnosis in
+  the A11Y-003 entry), and the heatmap is a solid white rectangle in
+  forced-colors mode (A11Y-005 entry).
+
+SUGGESTED NEXT ITEM
+CONTENT-001 (priority 16) is the only item left. It is docs-only: write
+docs/content-review.md and change no copy — its step 8 asserts
+`git diff --name-only src/ | wc -l` is 0 for that commit. The PRD is NOT
+complete until it is done.
