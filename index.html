@@ -3,6 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!--
+      The webfont is still requested by an @import inside src/index.css, so the
+      browser cannot discover fonts.googleapis.com until that stylesheet has been
+      fetched and parsed. Warming both origins here overlaps the connection setup
+      with that fetch. gstatic.com serves the font files themselves and is
+      requested anonymously, hence crossorigin.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
     <!--
       Entry animations are additive: content renders visible, and is only
       hidden for the duration of its reveal transition once we know scripts
@@ -14,6 +25,8 @@
     </script>
 
     <link rel="icon" type="image/svg+xml" href="/dilsher2.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="canonical" href="https://www.dilshersingh.com/" />
     <meta name="theme-color" content="#0a0a0a" />
 
@@ -40,6 +53,7 @@
       property="og:image"
       content="https://www.dilshersingh.com/og-image.jpg"
     />
+    <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
@@ -61,6 +75,10 @@
     <meta
       name="twitter:image"
       content="https://www.dilshersingh.com/og-image.jpg"
+    />
+    <meta
+      name="twitter:image:alt"
+      content="Dilsher Singh, Senior Full Stack Engineer"
     />
 
     <script type="application/ld+json">

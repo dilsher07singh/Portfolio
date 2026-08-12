@@ -1180,3 +1180,149 @@ SUGGESTED NEXT ITEM
 SEO-003 (priority 7), for the reasons above — it is the top of the queue, it is
 the same head block, and it unblocks PERF-003. After that PERF-003 (priority 9)
 or A11Y-004 (priority 8).
+
+--------------------------------------------------------------------------
+2026-08-12 — SEO-003 (priority 7, seo): head resources — preconnect hints,
+             generated app icons, web app manifest, og:image:type,
+             twitter:image:alt, and vite.svg deleted
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+Highest-priority item still open (priority 7) and the previous two loops both
+nominated it. It is also the unblocker for PERF-003 (priority 9), whose step 1
+explicitly depends on these preconnect hints. Taken in priority order.
+
+WHAT WAS DONE
+index.html (7 additions, all in the head):
+  - <link rel="preconnect" href="https://fonts.googleapis.com">
+  - <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  - <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  - <link rel="manifest" href="/site.webmanifest">
+  - <meta property="og:image:type" content="image/jpeg">
+  - <meta name="twitter:image:alt" content="...">
+New files: public/site.webmanifest, public/apple-touch-icon.png (180),
+public/icon-192.png, public/icon-512.png, scripts/generate-icons.mjs,
+scripts/icons.manifest.json.
+Deleted: public/vite.svg.
+
+og:image:type is image/jpeg per SEO-001's note, and og-image.jpg was NOT
+touched or converted — that note says several scrapers handle WebP poorly.
+
+>>> THE SOURCE LOGO CANNOT BE RASTERIZED AS-IS. THIS IS THE ONE REAL DESIGN
+>>> DECISION IN THIS ITEM — READ IT BEFORE YOU REGENERATE ANYTHING. <<<
+public/dilsher2.svg is a solid BLACK disc with the "DS" monogram KNOCKED OUT
+as transparency (I rendered it over grey and looked at it rather than assuming
+it was a normal glyph). Rasterized straight, you get black-on-transparent:
+invisible against this site's own dark theme, and iOS ignores transparency
+entirely and composites apple-touch-icon onto an opaque backdrop, so it would
+have shipped as a black square.
+
+So the disc is TINTED to #f5f5f5 (neutral-100, the site's heading colour) with
+a `dest-in` composite — which recolours it while preserving the knockout and
+its anti-aliased edges — and laid over an opaque #0a0a0a (neutral-950, the
+same value as the manifest's theme_color and background_color). The backdrop
+then shows through the knockout as the letterforms. Result is a light disc
+with a dark monogram: on-brand, and 18.16:1 contrast.
+MEASURED, NOT ASSUMED: all three PNGs report channels=3, hasAlpha=false,
+minimum alpha 255. Fully opaque, iOS-safe.
+
+GEOMETRY, and why the manifest can honestly say "any maskable"
+The SVG's own viewBox padding leaves the mark at just 57% of the canvas, which
+reads as lost inside a launcher tile. The script trims that padding off and
+re-insets the mark to MARK_RATIO 0.72 — measured back out of the finished PNGs
+at 72.2 / 71.9 / 72.1%, centred to within 0.1%. Staying under 80% is exactly
+what keeps a circular mark inside the Android maskable safe zone, so
+purpose "any maskable" here is a verified claim rather than the usual
+copy-pasted guess. If you raise MARK_RATIO past ~0.78, drop "maskable".
+
+THE ICONS ARE GENERATED, NOT HAND-EXPORTED
+Step 2 says "generate", and a hand-exported PNG silently rots the moment
+dilsher2.svg changes. scripts/generate-icons.mjs follows the conventions
+PERF-001 established for optimize-images.mjs, deliberately and point for point:
+  - outputs are COMMITTED, so a host with an unusable sharp binary still builds
+  - skip logic is a sha256 of the SOURCE BYTES + render settings, not mtimes
+    (a git checkout does not preserve mtimes — PERF-001 learned this)
+  - graceful degradation when sharp is missing
+  - wired into `yarn build` so it cannot drift, plus `yarn generate:icons`
+BOTH degradation branches were exercised for real by moving node_modules/sharp
+aside, not just reasoned about:
+    outputs present, work stale -> warning, exit 0
+    an output actually missing  -> clear error, exit 1
+Its hash manifest is at scripts/icons.manifest.json and is deliberately NOT in
+public/ — Vite copies public/ VERBATIM into dist/, and build state must not be
+deployed. That is also why the icons themselves must live in public/: they need
+stable unhashed URLs that index.html and the manifest can hardcode.
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems
+- yarn build -> pass (only the documented fetchPriority SSR warning that
+  RENDER-002's notes say explicitly not to "fix")
+- step 6: grep -r 'vite.svg' index.html src/ | wc -l          -> 0
+- step 7: all 3 PNGs + site.webmanifest present in dist/, each byte-identical
+  to its public/ source (cmp clean); dist/vite.svg does not exist
+- step 8: site.webmanifest JSON.parse's, in public/ AND in dist/
+- vite preview curls: apple-touch-icon / icon-192 / icon-512 -> 200 image/png,
+  site.webmanifest -> 200 application/manifest+json
+- icon geometry + opacity + contrast measured from the finished pixels (above)
+- both sharp-missing branches exercised (above)
+- PNG output byte-identical across a full regenerate -> no git churn
+
+RE-RAN EVERY HEAD ASSERTION AGAINST dist/index.html TOO, per SEO-002's lesson
+that source-correct and shipped-correct became two different claims once
+RENDER-002 made index.html a prerender TEMPLATE. All 7 new tags appear exactly
+once in BOTH files, and the regression set holds in both: canonical, og:image,
+og:type, og:url, twitter:card, ld+json = 1 each; keywords = 0; vite.svg = 0;
+JSON-LD still parses as @type Person; prerender still injects 56,457 chars with
+0 inline opacity:0. Head edits still do not disturb the prerender.
+I matched on RAW BYTES via node rather than shell grep, which sidesteps both
+traps SEO-002 documented (Prettier splits these meta tags across lines, and
+backslash-escaped quotes inside a single-quoted shell string silently return 0).
+
+>>> TWO GOTCHAS I HIT, ONE OF THEM NEW AND NASTY <<<
+1. `pkill -f "vite preview"` KILLED ITS OWN SHELL. The bash command line
+   contains the string "vite preview", so pkill -f matched the parent process
+   and the whole command died at that line (exit 144), silently skipping
+   everything after it. It did stop the server, but if you chain cleanup after
+   a pkill you will lose it. Use a pattern that cannot match your own command
+   line, or check state afterwards like I did.
+2. `require()` on a file with a .bak extension parses it as JavaScript, not
+   JSON, and throws a SyntaxError that looks like your data is corrupt. Read it
+   with fs.readFileSync + JSON.parse instead.
+
+NOTES FOR WHOEVER IS NEXT
+- PERF-003 (priority 9) IS NOW UNBLOCKED and is the natural follow-on: its
+  step 1 wanted these preconnects and now just needs the font moved out of the
+  @import in src/index.css into <link> tags right beside them, with the italic
+  axis dropped. The preconnects already help today even with the @import still
+  in place — they warm the connection while index.css is being fetched and
+  parsed — but the @import is still the render-blocking chain PERF-003 owns.
+- If you restyle the brand, the icons regenerate from dilsher2.svg but the
+  COLOURS are constants at the top of scripts/generate-icons.mjs (FOREGROUND /
+  BACKGROUND), and they must stay in sync with site.webmanifest's theme_color
+  and background_color and with public/404.html, which POLISH-001 notes is
+  hand-written CSS that does not follow a restyle automatically.
+- Cross-platform PNG determinism was NOT testable here (single platform). If a
+  future loop sees spurious icon diffs right after a platform switch — this
+  repo has had four of those — that is the cause, and it is cosmetic.
+- vite preview is SPA-fallback, so /vite.svg still returns 200 with index.html
+  there. That is not a surviving file. Check dist/ directly, as POLISH-001's
+  entry also warns.
+- Environment was CLEAN for the fourth loop running: node_modules/.bin
+  populated, lint and build worked on arrival, nothing squatting on port 3000.
+  I killed my own preview server before finishing.
+- STILL OUTSTANDING FROM EARLIER LOOPS, ALL STILL NOT DONE, ALL HUMAN ACTIONS:
+  SEC-001's Vercel GITHUB_TOKEN env var and REVOKING THE LEAKED TOKEN (it is
+  still live and still in the deployed bundle); SEO-001's post-deploy og-image
+  200 check plus the LinkedIn/X re-scrape; RENDER-002's post-deploy
+  `curl -s https://www.dilshersingh.com | grep -c 'Senior full stack'`.
+  SEO-003 adds no new post-deploy action, but once deployed it is worth
+  installing the site to a phone home screen once to eyeball the icon.
+- Also still unowned by any PRD item: the sticky header does not actually stick
+  (diagnosis in the A11Y-003 entry — the root div's overflow-x-hidden).
+
+SUGGESTED NEXT ITEM
+A11Y-004 (priority 8) is now the head of the queue — skip link plus named
+section landmarks — and has a trustworthy axe since POLISH-001. Read
+POLISH-001's finding first: A11Y-004's step 7 (region/bypass) ALREADY PASSES
+today and cannot detect the defect; step 6 is the real gate.
+Then PERF-003 (priority 9), newly unblocked by this item.
