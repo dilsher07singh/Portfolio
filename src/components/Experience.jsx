@@ -49,8 +49,13 @@ const Experience = () => {
               </ul>
 
               <div className="mb-4 flex flex-wrap gap-2">
+                {/*
+                  No `title` here: it repeated the chip's own visible text, so
+                  it added a hover tooltip that said nothing new and, on some
+                  screen readers, a second announcement of the same word.
+                */}
                 {experience.technologies.map((tech) => (
-                  <span key={tech} className={CHIP_CLASS} title={tech}>
+                  <span key={tech} className={CHIP_CLASS}>
                     {tech}
                   </span>
                 ))}

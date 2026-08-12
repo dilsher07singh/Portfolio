@@ -70,6 +70,11 @@ const Contact = () => {
           duration={0.6}
           className="mt-8 flex items-center justify-center gap-6 text-2xl"
         >
+          {/*
+            The icons are decorative — the anchor's aria-label names the link.
+            Matches Navbar.jsx, which renders the same entries from the same
+            array.
+          */}
           {CONTACT_SOCIALS.map(({ id, href, label, Icon }) => (
             <a
               key={id}
@@ -80,7 +85,7 @@ const Contact = () => {
               aria-label={label}
               className="transition-colors hover:text-purple-400"
             >
-              <Icon />
+              <Icon aria-hidden="true" />
             </a>
           ))}
         </Reveal>

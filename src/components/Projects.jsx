@@ -63,8 +63,9 @@ const Projects = () => {
                   </p>
 
                   <div className="mb-4 flex flex-wrap gap-2">
+                    {/* No `title` — it repeated the chip's visible text. */}
                     {project.technologies.map((tech) => (
-                      <span key={tech} className={CHIP_CLASS} title={tech}>
+                      <span key={tech} className={CHIP_CLASS}>
                         {tech}
                       </span>
                     ))}

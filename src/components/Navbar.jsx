@@ -14,13 +14,14 @@ const Navbar = () => {
           className="flex flex-shrink-0 items-center"
           aria-label="Dilsher Singh — back to top"
         >
-          <img
-            className="w-28"
-            src={logo}
-            width={562}
-            height={106}
-            alt="Dilsher Singh"
-          />
+          {/*
+            alt="" is deliberate, not an omission. The anchor already carries
+            an aria-label, so the image is decorative within it; any alt text
+            here would either be ignored or announced as a second name for the
+            same link. Keep the attribute present — dropping it entirely makes
+            the image an unnamed graphic instead of a hidden one.
+          */}
+          <img className="w-28" src={logo} width={562} height={106} alt="" />
         </a>
 
         {/* Section anchors */}
@@ -47,6 +48,12 @@ const Navbar = () => {
         </ul>
 
         {/* Social links */}
+        {/*
+          The icons are decorative: each anchor is named by its aria-label, so
+          react-icons' own role="img" svg would otherwise sit inside the link
+          as a second, unnamed graphic node. Same treatment as Technologies.jsx
+          and the arrows in Projects.jsx.
+        */}
         <div className="flex items-center justify-center gap-4 text-xl lg:text-2xl">
           {SOCIALS.map(({ id, href, label, Icon }) => (
             <a
@@ -58,7 +65,7 @@ const Navbar = () => {
               aria-label={label}
               className="transition-colors hover:text-purple-400"
             >
-              <Icon />
+              <Icon aria-hidden="true" />
             </a>
           ))}
         </div>

@@ -1885,3 +1885,129 @@ A11Y-006 (priority 13), for the reason above. Then PERF-004 (14) — note its
 step 1 still names framer-motion as a vendor chunk, but RENDER-001 removed every
 framer-motion import, so that dependency is dead weight in package.json and the
 step needs rewording before it can be satisfied literally.
+
+--------------------------------------------------------------------------
+2026-08-12 — A11Y-006 (priority 13, accessibility): every duplicated
+             accessible name removed, with zero pixels changed
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+Head of the queue at priority 13, and the previous loop shaped POLISH-002
+specifically to make this item's step 4 a one-line edit per file. Nothing
+above it is open. Still open after this: PERF-004 (14), POLISH-003 (15),
+CONTENT-001 (16).
+
+WHAT WAS DONE
+Five component files. No CSS file, no constants, no build script.
+
+1. Navbar.jsx  logo <img alt="Dilsher Singh"> -> alt="".
+2. Hero.jsx    the metric <dl> restructured (this is the only non-trivial
+               part — see below).
+3. Experience.jsx + Projects.jsx  title={tech} removed from all 31 chips.
+4. Navbar.jsx + Contact.jsx  aria-hidden="true" on the 8 social <Icon />s.
+
+>>> BOTH FULL-PAGE PIXEL DIFFS ARE ZERO. THAT IS THE HEADLINE. <<<
+Built HEAD (8f73639) in a git worktree, served it on :3001 next to the new
+build on :3000, scrolled both fully so every reveal fired, and diffed
+full-page screenshots:
+    1280 x 5435   0 of 6,956,800 pixels differ
+     375 x 8963   0 of 3,361,125 pixels differ
+Document height identical at both widths. The built CSS gained exactly one
+rule (.flex-col-reverse) and lost none. For an item that rewrites the markup
+of a visible component, that diff is the check that actually matters.
+
+>>> STEP 2 COULD NOT BE A DELETION. HERE IS WHY, AND WHAT I DID INSTEAD. <<<
+The metric was:
+    <dt class="sr-only">label</dt>
+    <dd><span>value</span><span>label</span></dd>
+so the label was genuinely announced twice. Two tempting fixes are both wrong:
+  - Drop the dt. A <dl> requires a term for every definition; you would be
+    trading a duplication for invalid markup.
+  - aria-hidden the visible label. That hides real on-screen text from AT to
+    paper over a markup problem.
+So the label IS the dt now and the value IS the dd, and the pair is reversed
+VISUALLY with `flex flex-col-reverse` on the wrapper div. DOM order stays
+term-then-definition, which is what the semantics require; the design still
+shows the big purple figure above its small label.
+Worth knowing if you touch this: column-reverse reverses the painting order
+of the items, NOT each item's own margin box, so the label's `mt-1` still
+produces the gap between figure and label. I confirmed that with the pixel
+diff rather than by reasoning about it.
+
+STEP 1 IS alt="", NOT A REMOVED ATTRIBUTE, AND THE DIFFERENCE IS THE POINT
+An empty alt marks the image decorative and prunes it from the tree. Removing
+the attribute would leave an unnamed graphic node sitting inside the link.
+Chrome's tree now shows `link "Dilsher Singh — back to top"` with no child
+node, and the page's img nodes drop from 6 to 5 (hero avatar, 3 project
+screenshots, heatmap). There is a comment on the tag saying so, because
+"alt is missing" is exactly what a future reader or linter will assume.
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems
+- yarn build -> pass (only the documented fetchPriority SSR warning)
+- step 5: Chrome a11y tree — logo link name is exactly
+          "Dilsher Singh — back to top", no duplicated segment, no child node
+- step 6: each of the 4 metric labels appears EXACTLY ONCE in the full-page
+          aria snapshot; the tree shows 4 term/definition pairs
+- step 3: grep -rc 'title={tech}' src/ -> 0; in-browser, 0 of 31 chips carry
+          a title (was 31 of 31)
+- step 4: all 26 svgs on the page now have aria-hidden="true", so
+          `svg:not([aria-hidden="true"])` returns 0. The 8 new ones join the
+          18 already correct in Technologies/Projects.
+- axe-core 4.10.2, all rules, no test-time workaround (body inline style is
+  null): 0 violations, 44 rules passing, 1 incomplete — the radial-gradient
+  contrast node POLISH-001 documented as permanently unmeasurable
+- prerendered HTML diff vs baseline is EXACTLY the intended set: 31 titles
+  removed, 8 aria-hidden added, 4 metric groups restructured, one alt
+  emptied, plus the two asset hashes. Nothing else moved.
+- no regressions: 7 named regions in order, 1 contentinfo, 0 duplicate ids,
+  0 dangling idrefs, 30 reveals / 0 stranded at both widths, 0 horizontal
+  overflow at 1280 and 375, logo link still paints A11Y-003's ring
+  (2px solid rgb(192,132,252) offset 2px)
+- only console error is the pre-existing fonts.googleapis.com cert failure
+  from the sandbox firewall
+
+A11Y-006 is browserTest:false, so this was beyond requirement — but accessible
+NAME computation is a runtime property of the a11y tree and cannot be
+established by reading JSX, which is the same reasoning every a11y loop before
+this one used.
+
+WHAT I DELIBERATELY LEFT ALONE
+- The heatmap day cells keep their `title`. A11Y-005 already ruled it out of
+  scope here: it is the mouse tooltip and duplicates no visible text.
+- The social anchors keep title={label}. Those links have no visible text, so
+  the tooltip is additive, and POLISH-002 preserved it on purpose.
+- The project images keep their descriptive alt. A11Y-001's notes floated
+  making them decorative now that the link is named from its h3, but that is
+  not in this item's steps and it would strip real information from a card
+  whose screenshot is its main visual. Worth a separate item if wanted.
+
+NOTES FOR WHOEVER IS NEXT
+- Prerender injects 56,540 chars, down from 57,197. The 657-char drop is the
+  31 titles + 4 duplicated label spans + 4 sr-only dts, less the 8 added
+  aria-hidden attributes. If that number moves unexpectedly later, this is
+  the baseline.
+- Environment was CLEAN for the fourth loop running: node_modules/.bin
+  populated, lint and build fine on arrival, nothing squatting on port 3000.
+  I killed my two preview servers with the bracketed `pkill -f 'vite p[r]eview'`
+  form and removed the /tmp/a11y006-base worktree.
+- STILL OUTSTANDING FROM EARLIER LOOPS, ALL HUMAN ACTIONS, NONE DONE:
+  SEC-001's Vercel GITHUB_TOKEN env var; REVOKING THE LEAKED GITHUB TOKEN (it
+  is still live and still in the deployed bundle); SEO-001's post-deploy
+  og-image 200 check plus the LinkedIn/X re-scrape; PERF-003's post-deploy
+  Cache-Control checks; RENDER-002's post-deploy
+  `curl -s https://www.dilshersingh.com | grep -c 'Senior full stack'`.
+- Also still unowned by any PRD item: the sticky header does not stick
+  (diagnosis in the A11Y-003 entry), and the heatmap is a solid white
+  rectangle in forced-colors mode (A11Y-005 entry).
+
+SUGGESTED NEXT ITEM
+PERF-004 (priority 14) is next and is now the last piece of real engineering
+work in the PRD. READ ITS STEP 1 BEFORE STARTING: it asks for a framer-motion
+vendor chunk, but RENDER-001 removed every framer-motion import, so that
+package is dead weight in package.json and manualChunks cannot split a
+dependency nothing imports. Either drop framer-motion and reword the step, or
+expect step 1 to be unsatisfiable as literally written. Its 335KB baseline is
+also stale — the bundle is 188KB today for the same reason.
+Then POLISH-003 (15, toolchain) and CONTENT-001 (16, a docs-only deliverable
+that must not touch src/).

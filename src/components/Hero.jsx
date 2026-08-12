@@ -109,16 +109,27 @@ const Hero = () => {
         delay={0.2}
         className="mt-12 grid grid-cols-2 gap-6 border-t border-neutral-700 pt-8 lg:grid-cols-4 lg:gap-8"
       >
+        {/*
+          The label is a real <dt> now, not a screen-reader-only copy sitting
+          above a visible duplicate of the same string — that arrangement had
+          every metric announced twice.
+
+          The pair is reversed visually rather than in the DOM: a definition
+          list has to be term-then-definition, but the design shows the figure
+          first and the label beneath it. Reversing the flex direction keeps
+          the markup order the semantics require while the rendering is
+          unchanged to the pixel.
+        */}
         {METRICS.map((metric) => (
-          <div key={metric.label} className="text-center lg:text-left">
-            <dt className="sr-only">{metric.label}</dt>
-            <dd>
-              <span className="block text-3xl font-semibold tracking-tight text-purple-400 lg:text-4xl">
-                {metric.value}
-              </span>
-              <span className="mt-1 block text-sm leading-snug text-neutral-400">
-                {metric.label}
-              </span>
+          <div
+            key={metric.label}
+            className="flex flex-col-reverse text-center lg:text-left"
+          >
+            <dt className="mt-1 text-sm leading-snug text-neutral-400">
+              {metric.label}
+            </dt>
+            <dd className="text-3xl font-semibold tracking-tight text-purple-400 lg:text-4xl">
+              {metric.value}
             </dd>
           </div>
         ))}
