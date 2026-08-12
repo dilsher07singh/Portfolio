@@ -1,121 +1,114 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 const GithubContributions = () => {
-  const [contributions, setContributions] = useState([]);
-  const [totalContributions, setTotalContributions] = useState(0);
-
-  const API_KEY = import.meta.env.VITE_GITHUB_KEY;
-
-  // List of months to label the graph
-  const monthLabels = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
+  const [weeks, setWeeks] = useState([]);
+  const [totalContributions, setTotalContributions] = useState(null);
+  const [status, setStatus] = useState("loading"); // loading | ready | error
 
   useEffect(() => {
+    let cancelled = false;
+
+    // Written at build time by scripts/fetch-github.mjs. The GitHub token stays
+    // on the build machine so no credential ever reaches the browser.
     const fetchContributions = async () => {
       try {
-        const response = await axios.post(
-          "https://api.github.com/graphql",
-          {
-            query: `
-              {
-                user(login: "dilsher07singh") {
-                  contributionsCollection {
-                    contributionCalendar {
-                      totalContributions
-                      weeks {
-                        contributionDays {
-                          contributionCount
-                          date
-                          color
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            `,
-          },
-          {
-            headers: {
-              Authorization: `bearer ${API_KEY}`,
-            },
-          }
-        );
+        const response = await fetch("/github-contributions.json");
 
-        const contributionCalendar =
-          response.data.data.user.contributionsCollection.contributionCalendar;
-        setContributions(contributionCalendar.weeks); // Set weeks data
-        setTotalContributions(contributionCalendar.totalContributions); // Set total contributions
+        if (!response.ok) {
+          throw new Error(`Request failed with status ${response.status}`);
+        }
+
+        const calendar = await response.json();
+
+        if (cancelled) return;
+
+        if (!calendar?.weeks?.length) {
+          setStatus("error");
+          return;
+        }
+
+        setWeeks(calendar.weeks);
+        setTotalContributions(calendar.totalContributions);
+        setStatus("ready");
       } catch (error) {
+        if (cancelled) return;
         console.error("Error fetching GitHub contributions", error);
+        setStatus("error");
       }
     };
 
     fetchContributions();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
-    <div className="border-b border-neutral-900 pb-4">
-      {/* SEO Optimized Heading */}
-      <motion.h1
+    <section
+      id="github"
+      className="scroll-mt-24 border-b border-neutral-900 pb-4"
+    >
+      <motion.h2
         whileInView={{ opacity: 1, y: 0 }}
-        initial={{ opacity: 0, y: -100 }}
+        initial={{ opacity: 0, y: -40 }}
+        viewport={{ once: true }}
         transition={{ duration: 0.5 }}
         className="my-20 text-center text-4xl"
       >
         GitHub Contributions
-      </motion.h1>
+      </motion.h2>
 
-      {/* Display total contributions */}
-      <p className="text-center text-lg mb-8">
-        Last Year GitHub Contributions: {totalContributions}
-      </p>
+      {status === "loading" && (
+        <p className="mb-8 text-center text-neutral-500">
+          Loading contribution activity…
+        </p>
+      )}
 
-      {/* Month labels */}
-      <div
-        className="flex justify-center mb-4"
-        aria-label="Month labels for contribution graph"
-      >
-        {monthLabels.map((month, index) => (
-          <span key={index} className="w-12 text-center text-sm">
-            {month}
-          </span>
-        ))}
-      </div>
+      {status === "error" && (
+        <p className="mb-8 text-center text-neutral-500">
+          GitHub activity is unavailable right now —{" "}
+          <a
+            href="https://github.com/dilsher07singh"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-purple-400 transition-colors hover:text-purple-300"
+          >
+            view it on GitHub
+          </a>
+          .
+        </p>
+      )}
 
-      {/* GitHub-style contribution graph */}
-      <div className="flex justify-center space-x-1 overflow-auto">
-        {contributions.map((week, weekIndex) => (
-          <div key={weekIndex} className="flex flex-col space-y-1">
-            {week.contributionDays.map((day, dayIndex) => (
-              <div
-                key={dayIndex}
-                className="w-4 h-4 md:w-6 md:h-6"
-                style={{ backgroundColor: day.color }}
-                title={`${day.contributionCount} contributions on ${day.date}`}
-                aria-label={`${
-                  day.contributionCount
-                } contributions on ${new Date(day.date).toLocaleDateString()}`}
-              />
-            ))}
+      {status === "ready" && (
+        <>
+          <p className="mb-8 text-center text-lg">
+            {totalContributions.toLocaleString()} contributions in the last year
+          </p>
+
+          <div className="overflow-x-auto pb-2">
+            <div className="mx-auto flex w-max gap-1">
+              {weeks.map((week) => (
+                <div
+                  key={week.contributionDays[0]?.date}
+                  className="flex flex-col gap-1"
+                >
+                  {week.contributionDays.map((day) => (
+                    <div
+                      key={day.date}
+                      className="h-3 w-3 rounded-sm"
+                      style={{ backgroundColor: day.color }}
+                      title={`${day.contributionCount} contributions on ${day.date}`}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
-    </div>
+        </>
+      )}
+    </section>
   );
 };
 

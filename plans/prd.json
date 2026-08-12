@@ -1,0 +1,346 @@
+[
+  {
+    "id": "SEC-001",
+    "category": "security",
+    "priority": 1,
+    "description": "Remove the GitHub personal access token from the client bundle. The token is currently read as import.meta.env.VITE_GITHUB_KEY in src/components/GithubContributions.jsx and sent as an Authorization header. Because the VITE_ prefix makes Vite inline the value at build time, the token ships in plaintext to every visitor. Replace the runtime authenticated request with a build-time fetch that writes a static JSON file, so no credential ever reaches the browser.",
+    "passes": true,
+    "browserTest": false,
+    "notes": "Code work complete and verified 2026-08-12. .env renamed VITE_GITHUB_KEY -> GITHUB_TOKEN; .env.example added; scripts/fetch-github.mjs added and wired into the build script (node --env-file-if-exists=.env scripts/fetch-github.mjs && vite build); GithubContributions.jsx now fetches /github-contributions.json with no auth header; axios removed from package.json and yarn.lock. Verified: yarn lint passes, yarn build passes, `grep -rl 'ghp_' dist/` = 0, the literal token value appears 0 times in dist/, `grep -r 'VITE_GITHUB_KEY' src/ scripts/` = 0, no import.meta.env left in src/, and the preview server returns the JSON at 200 application/json. public/github-contributions.json is committed as a fallback so the section still renders if a build runs without the token. TWO HUMAN ACTIONS REMAIN AND ARE NOT DONE: (1) add GITHUB_TOKEN to the Vercel project environment variables via the dashboard, and (2) revoke the old leaked token at https://github.com/settings/tokens — it is still live and is present in the previously deployed bundle, so it must be treated as compromised.",
+    "steps": [
+      "Rename the variable in .env from VITE_GITHUB_KEY to GITHUB_TOKEN (no VITE_ prefix, so Vite never inlines it).",
+      "Create .env.example containing the line 'GITHUB_TOKEN=' with a comment that it needs the read:user scope, and confirm .env itself remains listed in .gitignore.",
+      "Create scripts/fetch-github.mjs that reads process.env.GITHUB_TOKEN, POSTs the existing contributionsCollection GraphQL query to https://api.github.com/graphql, and writes the result to public/github-contributions.json.",
+      "Verify the script exits with code 0 and skips writing (rather than throwing) when GITHUB_TOKEN is unset: run `env -u GITHUB_TOKEN node scripts/fetch-github.mjs; echo $?` and confirm it prints 0.",
+      "Rewrite src/components/GithubContributions.jsx to call fetch('/github-contributions.json'), removing the import.meta.env read, the Authorization header, and the axios import, while preserving the existing 'loading | ready | error' state machine and the `cancelled` cleanup flag that guards against setState after unmount.",
+      "Remove axios from package.json dependencies (it was used for exactly one request) and reinstall so yarn.lock updates.",
+      "Run `yarn build`, then assert the bundle is clean: `grep -rl 'ghp_' dist/ | wc -l` must output 0.",
+      "Assert the env var name is gone from source: `grep -r 'VITE_GITHUB_KEY' src/ scripts/ | wc -l` must output 0.",
+      "Add GITHUB_TOKEN to the Vercel project environment variables via the dashboard (not committed to the repo).",
+      "MANUAL, cannot be automated: revoke the old token at https://github.com/settings/tokens and confirm it is dead by checking that `curl -s -o /dev/null -w '%{http_code}' -H 'Authorization: Bearer <OLD_TOKEN>' https://api.github.com/user` returns 401."
+    ]
+  },
+  {
+    "id": "SEO-001",
+    "category": "seo",
+    "priority": 2,
+    "description": "Commit the Open Graph image so social link previews work. public/og-image.jpg exists on disk at the correct 1200x630 dimensions and index.html already references it at an absolute URL, but the file is untracked in git. Committing index.html without it leaves og:image returning 404 in production, which is the current live behavior.",
+    "passes": false,
+    "browserTest": false,
+    "steps": [
+      "Run `git add public/og-image.jpg` and confirm `git status --short public/og-image.jpg` no longer shows '??'.",
+      "Confirm dimensions are exactly 1200x630: `file public/og-image.jpg` must report '1200x630'.",
+      "Confirm file size is under 300KB so LinkedIn and Slack will fetch it without timing out.",
+      "Run `yarn build` and confirm the file is copied to dist/og-image.jpg.",
+      "After deploying, confirm `curl -sI https://www.dilshersingh.com/og-image.jpg -o /dev/null -w '%{http_code}'` returns 200 (it currently returns 404).",
+      "Confirm the old broken path is no longer referenced anywhere: `grep -r '/src/assets/dilsherSinghProfile' index.html | wc -l` must output 0."
+    ]
+  },
+  {
+    "id": "SEO-002",
+    "category": "seo",
+    "priority": 6,
+    "description": "Remove the obsolete meta keywords tag from index.html. It is ignored by all major search engines and has been treated as a spam signal historically. Every other requested SEO tag (title, description, canonical, og:*, twitter:*, JSON-LD Person schema, theme-color) is already present and correct in the working tree and needs no change.",
+    "passes": false,
+    "browserTest": false,
+    "steps": [
+      "Delete the <meta name=\"keywords\" ...> element from index.html.",
+      "Assert it is gone: `grep -c 'name=\"keywords\"' index.html` must output 0.",
+      "Assert the tags that must remain are still intact: grep index.html and confirm one each of 'rel=\"canonical\"', 'og:image', 'og:type', 'og:url', 'twitter:card', and 'application/ld+json'.",
+      "Validate the JSON-LD block still parses as valid JSON after the edit by extracting it and piping through `node -e 'JSON.parse(require(\"fs\").readFileSync(0,\"utf8\"))'`."
+    ]
+  },
+  {
+    "id": "SEO-003",
+    "category": "seo",
+    "priority": 7,
+    "description": "Add the missing head resources: preconnect hints for the Google Fonts origins, an apple-touch-icon, a web app manifest with 192px and 512px PNG icons, og:image:type, and twitter:image:alt. Also delete the unreferenced public/vite.svg template leftover.",
+    "passes": false,
+    "browserTest": false,
+    "steps": [
+      "Add <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"> and <link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin> to index.html.",
+      "Generate 180x180 apple-touch-icon.png, 192x192, and 512x512 PNG icons from the existing public/dilsher2.svg and place them in public/.",
+      "Create public/site.webmanifest with name 'Dilsher Singh', short_name, theme_color '#0a0a0a', background_color '#0a0a0a', display 'standalone', and the two PNG icon entries.",
+      "Link the manifest and apple-touch-icon from index.html.",
+      "Add <meta property=\"og:image:type\" content=\"image/jpeg\"> and a twitter:image:alt tag.",
+      "Delete public/vite.svg and confirm nothing references it: `grep -r 'vite.svg' index.html src/ | wc -l` must output 0.",
+      "Run `yarn build` and confirm all icon files plus site.webmanifest appear in dist/.",
+      "Validate the manifest parses: `node -e 'JSON.parse(require(\"fs\").readFileSync(\"public/site.webmanifest\",\"utf8\"))'`."
+    ]
+  },
+  {
+    "id": "A11Y-001",
+    "category": "accessibility",
+    "priority": 3,
+    "description": "Fix the project card aria-label that hides all card content from screen readers. In src/components/Projects.jsx an <a> wraps the entire card and carries aria-label=\"View details about the project {title}\". Because aria-label on a link overrides its subtree's accessible name, screen reader users hear only that label and lose the h3, the description paragraph, and every technology chip. The label is also factually wrong: the href points to the live external site, not a details page.",
+    "passes": false,
+    "browserTest": true,
+    "steps": [
+      "Remove the aria-label from the card-wrapping <a> in src/components/Projects.jsx so the link's accessible name derives from its content, or replace it with aria-labelledby referencing the h3's id.",
+      "If a visible CTA is used instead, ensure its accessible name states the destination, e.g. 'View Dualmint Marketplace (opens in a new tab)'.",
+      "Playwright: for each of the 3 project cards, assert the link's accessible name contains the project title AND that the card's description text is reachable in the accessibility tree (use page.accessibility.snapshot() or locator.ariaSnapshot() and confirm the description string appears).",
+      "Playwright: assert the accessible name no longer equals the literal string 'View details about the project ' + title.",
+      "Confirm target=\"_blank\" and rel=\"noopener noreferrer\" are still present on all 3 cards after the edit."
+    ]
+  },
+  {
+    "id": "A11Y-002",
+    "category": "accessibility",
+    "priority": 4,
+    "description": "Fix the five WCAG AA color contrast failures. text-neutral-500 (#737373) on the bg-neutral-950 (#0a0a0a) page background measures 4.18:1, and 3.78:1 where it sits on bg-neutral-900 cards. Both fall short of the 4.5:1 minimum for normal-size text. Changing to text-neutral-400 (#a3a3a3) yields 7.85:1 and passes comfortably with a barely perceptible visual change.",
+    "passes": false,
+    "browserTest": true,
+    "steps": [
+      "Replace text-neutral-500 with text-neutral-400 at these five small-text locations: src/components/Experience.jsx (the year/date line), src/components/GithubContributions.jsx (both the loading and error messages), src/components/About.jsx (the uppercase dt highlight labels), and src/components/Contact.jsx (the copyright line).",
+      "Do NOT change src/components/About.jsx where text-neutral-500 styles the word 'Me' in the text-4xl 'About Me' heading. At that size it qualifies as large text and passes the 3:1 threshold; changing it would alter the intended visual design.",
+      "Assert only the intended instance remains: `grep -rc 'text-neutral-500' src/` must total exactly 1, in About.jsx.",
+      "Increase card border contrast from border-neutral-800 (1.4:1 against the background) to border-neutral-700 in Hero.jsx, About.jsx, Technologies.jsx, and Projects.jsx, where the border is the only thing delineating the card (WCAG 1.4.11 requires 3:1 for such non-text boundaries).",
+      "Strengthen the email link underline in Contact.jsx from border-purple-400/40 (about 1.6:1) to at least /70, since the link is otherwise distinguished by color alone (WCAG 1.4.1).",
+      "Playwright + @axe-core/playwright: run an axe scan and assert zero violations with id 'color-contrast'.",
+      "Confirm with WAVE on the deployed URL that the contrast error count is 0."
+    ]
+  },
+  {
+    "id": "A11Y-003",
+    "category": "accessibility",
+    "priority": 5,
+    "description": "Add a global :focus-visible style. No element in the codebase suppresses outlines, so default browser rings are intact, but only one element (the navbar section links) has an authored focus style and it is a color change with no ring. On a #0a0a0a background the default ring is nearly invisible in some browsers. A single global rule covers all 15 interactive elements at once.",
+    "passes": false,
+    "browserTest": true,
+    "steps": [
+      "Add to src/index.css: a :focus-visible rule setting outline 2px solid #c084fc (purple-400, which measures 7.49:1 against the page background) with outline-offset 2px.",
+      "Verify no rule reintroduces suppression: `grep -rc 'outline-none' src/` must output 0.",
+      "Playwright: press Tab repeatedly from page load through all focusable elements and assert every one has a computed outline-width of at least 2px and a non-'none' outline-style.",
+      "Playwright: assert focus is never trapped and never lands on an off-screen element without scrolling it into view.",
+      "Confirm the focus ring is visible against both the page background and the bg-neutral-900 card backgrounds."
+    ]
+  },
+  {
+    "id": "A11Y-004",
+    "category": "accessibility",
+    "priority": 8,
+    "description": "Add a skip-to-content link and expose the section landmarks. The sticky header contains 11 focusable controls that keyboard users must tab through on every page load. Separately, all 7 <section> elements have a visible h2 but no accessible name, and a section without an accessible name is not exposed as a landmark at all, so every section is skipped in the screen reader landmark rotor.",
+    "passes": false,
+    "browserTest": true,
+    "steps": [
+      "Add id=\"main\" to the <main> element in src/App.jsx.",
+      "Add a skip link as the first focusable element in the DOM, href=\"#main\", visually hidden until focused (sr-only with a focus:not-sr-only variant), positioned so it does not overlap the sticky header when shown.",
+      "Give each section's h2 an id and add aria-labelledby on the corresponding <section> pointing to it, across all 7 sections: Hero, About, Technologies, Experience, Projects, GithubContributions, Contact.",
+      "Playwright: load the page, press Tab once, and assert the focused element is the skip link and that it is visible (not clipped) at that moment.",
+      "Playwright: activate the skip link and assert document.activeElement or the scroll position moved to #main.",
+      "Playwright: assert page.getByRole('region') returns 7 entries, each with a non-empty accessible name matching its heading text.",
+      "Playwright + axe: assert zero violations for the 'region' and 'bypass' rules."
+    ]
+  },
+  {
+    "id": "A11Y-005",
+    "category": "accessibility",
+    "priority": 12,
+    "description": "Make the GitHub contributions heatmap accessible and add a real footer landmark. The heatmap renders roughly 365 bare <div>s that convey data only through background-color plus a title attribute; title is unreliable for screen readers and unavailable on touch devices, and the color-only encoding is invisible to colorblind users and in forced-colors mode. Separately the copyright sits in a <p> inside the contact section rather than a <footer>.",
+    "passes": false,
+    "browserTest": true,
+    "steps": [
+      "Wrap the heatmap grid in a container with role=\"img\" and an aria-label summarizing the data, e.g. 'GitHub contribution heatmap: 1,234 contributions over the last year'.",
+      "Mark the individual day cells aria-hidden=\"true\" so screen readers announce the single summary instead of 365 unlabeled nodes.",
+      "Move the copyright line out of src/components/Contact.jsx into a real <footer> element in src/App.jsx, outside <main>.",
+      "Playwright: assert page.getByRole('contentinfo') resolves to exactly 1 element containing the copyright text.",
+      "Playwright: assert the heatmap exposes one element with role 'img' whose accessible name includes the contribution total, and that the day cells are not individually present in the accessibility snapshot.",
+      "Playwright: emulate forced-colors: active and confirm the heatmap still conveys its summary via the aria-label."
+    ]
+  },
+  {
+    "id": "A11Y-006",
+    "category": "accessibility",
+    "priority": 13,
+    "description": "Clean up redundant and duplicated accessible text. The navbar logo image carries alt=\"Dilsher Singh\" while its parent anchor already has aria-label=\"Dilsher Singh — back to top\", so the link is announced twice. The Hero metrics render each label twice, once in an sr-only <dt> and again visibly in the <dd>. Technology chips carry a title attribute duplicating their own visible text verbatim.",
+    "passes": false,
+    "browserTest": true,
+    "steps": [
+      "Set alt=\"\" on the logo <img> in src/components/Navbar.jsx, since the parent anchor supplies the accessible name.",
+      "De-duplicate the Hero metric labels so each label is announced exactly once.",
+      "Remove title={tech} from the chips in src/components/Experience.jsx and src/components/Projects.jsx where it repeats the visible text.",
+      "Add aria-hidden=\"true\" to the decorative social icons in Navbar.jsx and Contact.jsx for consistency with the already-correct usage in Technologies.jsx and Projects.jsx.",
+      "Playwright: assert the navbar logo link's accessible name is exactly 'Dilsher Singh — back to top' with no duplicated name segment.",
+      "Playwright: for each Hero metric, assert its label string appears exactly once in the accessibility snapshot."
+    ]
+  },
+  {
+    "id": "PERF-001",
+    "category": "performance",
+    "priority": 3,
+    "description": "Optimize the image payload, which is the single largest performance problem in the repo: roughly 4.5MB of images are shipped to render three 200px-wide thumbnails and one 384px avatar. Two files are PNG data misnamed with a .jpg extension (project-1.jpg is 2.2MB at 1900x1318; project-3.jpg is 2245x1324), dilsherSinghProfile.png is a 1.2MB photo stored as PNG at 1024x1024, and project-2.png is 922KB at 2553x1308. Vite copies all of them into dist byte-for-byte with zero optimization.",
+    "passes": false,
+    "browserTest": false,
+    "steps": [
+      "Convert all four images to WebP at roughly 2x their maximum displayed size (about 400px wide for project thumbnails, 768px for the hero avatar) rather than their current 1900-2553px source widths.",
+      "Wire the conversion into the build via vite-plugin-image-optimizer or a pre-build script so it is reproducible and not a one-off manual step.",
+      "Correct the misleading extensions so the file extension matches the actual encoded format.",
+      "Delete the unreferenced src/assets/dilsherSinghProfile.jpg (174KB of dead weight; the .png is the one imported).",
+      "Assert the payload target: `du -sk dist/assets` must total under 500KB, down from the current ~4.8MB.",
+      "Assert no single image in dist exceeds 150KB: `find dist/assets -type f \\( -name '*.webp' -o -name '*.png' -o -name '*.jpg' \\) -size +150k | wc -l` must output 0.",
+      "Confirm every image still resolves after renaming: build and check the browser console for zero 404s on image requests.",
+      "Confirm visual quality is not visibly degraded at the rendered display sizes."
+    ]
+  },
+  {
+    "id": "PERF-002",
+    "category": "performance",
+    "priority": 4,
+    "description": "Stop delaying the largest contentful paint with entry animations. In src/components/Hero.jsx the LCP image is held at opacity 0 with a 1.2 second animation delay and the bio paragraph is delayed 1 second. This deliberately defers the LCP element by over a second and by itself caps the Lighthouse performance score regardless of any other optimization.",
+    "passes": false,
+    "browserTest": true,
+    "steps": [
+      "Remove or drastically reduce the transition delays on above-the-fold Hero content: the h1, the tagline span, the bio paragraph, and the profile image.",
+      "Add fetchPriority=\"high\" to the hero profile image, which already has width, height, and loading=\"eager\".",
+      "Add width and height attributes to the images in src/components/Projects.jsx and src/components/Navbar.jsx, which currently lack them, to prevent layout shift as they load.",
+      "Playwright: measure LCP via PerformanceObserver on the built preview build and assert it is under 2.5 seconds.",
+      "Playwright: measure cumulative layout shift and assert CLS is under 0.1.",
+      "Playwright: assert the hero image is non-transparent within 300ms of load by checking its computed opacity is 1.",
+      "Run Lighthouse on the preview build and assert the Performance category is at least 95, using the median of 3 runs since scores vary by about plus or minus 5 between runs on identical builds."
+    ]
+  },
+  {
+    "id": "PERF-003",
+    "category": "performance",
+    "priority": 9,
+    "description": "Fix the render-blocking font load and add caching headers. The Inter font is pulled in via a CSS @import at the top of src/index.css, which is the slowest possible path: the browser must download and parse index.css before it even discovers the font CSS URL, then fetch that, then the font files. The request also asks for the full 100-900 weight range in both roman and italic, but the site uses no italics. Separately there is no vercel.json, so hash-named immutable assets are served with max-age=0.",
+    "passes": false,
+    "browserTest": false,
+    "steps": [
+      "Move the Google Fonts request from the @import in src/index.css to <link> tags in index.html, paired with the preconnect hints from SEO-003, keeping display=swap which is already present.",
+      "Drop the unused italic axis from the font URL, keeping only the roman weights the site actually uses.",
+      "Assert the import is gone: `grep -c '@import url(\"https://fonts' src/index.css` must output 0.",
+      "Create vercel.json setting 'Cache-Control: public, max-age=31536000, immutable' for /assets/* (safe because Vite hash-names these files) and 'public, max-age=0, must-revalidate' for HTML.",
+      "Add the security headers X-Content-Type-Options nosniff, Referrer-Policy strict-origin-when-cross-origin, and X-Frame-Options DENY in the same vercel.json.",
+      "Validate the config parses: `node -e 'JSON.parse(require(\"fs\").readFileSync(\"vercel.json\",\"utf8\"))'`.",
+      "After deploying, assert `curl -sI https://www.dilshersingh.com/assets/<hashed-file>.js | grep -i cache-control` reports max-age=31536000 and immutable.",
+      "After deploying, assert the HTML response still reports must-revalidate so users get new deploys immediately.",
+      "Confirm in Lighthouse that 'Eliminate render-blocking resources' no longer flags the font stylesheet."
+    ]
+  },
+  {
+    "id": "PERF-004",
+    "category": "performance",
+    "priority": 14,
+    "description": "Split the JavaScript bundle. The production build emits a single 335KB chunk (112KB gzipped) containing React, framer-motion, and react-icons alongside all application code, so any source change invalidates the entire cached bundle for returning visitors.",
+    "passes": false,
+    "browserTest": false,
+    "steps": [
+      "Add build.rollupOptions.output.manualChunks to vite.config.js separating react/react-dom, framer-motion, and react-icons into distinct vendor chunks.",
+      "Run `yarn build` and confirm dist/assets contains more than one .js file.",
+      "Assert no single JS chunk exceeds 150KB raw.",
+      "Confirm total gzipped JS does not increase relative to the current 112KB baseline (splitting should not add meaningful overhead).",
+      "Confirm the site still renders and the contributions graph still loads after splitting."
+    ]
+  },
+  {
+    "id": "RENDER-001",
+    "category": "rendering",
+    "priority": 2,
+    "description": "Make entry animations degrade to visible content, and honor prefers-reduced-motion. This is a hard prerequisite for RENDER-002: every whileInView animation sets initial={{ opacity: 0 }} as an inline style, so prerendering the app as-is would emit HTML whose text is present but invisible, which search engines may discount and which would defeat the purpose of prerendering. Additionally none of the 7 animating components honors prefers-reduced-motion; because framer-motion writes inline styles, a CSS media query cannot override it and the fix must happen in JS.",
+    "passes": false,
+    "browserTest": true,
+    "steps": [
+      "Wrap the app tree in <MotionConfig reducedMotion=\"user\"> in src/App.jsx, which makes all framer-motion animations respect the OS-level reduced-motion setting globally.",
+      "Convert entry animations so the base rendered state is visible and the animation is additive, replacing inline initial opacity 0 with a CSS keyframe or IntersectionObserver-applied class across the roughly 20 animated elements in About, Technologies, Experience, Projects, GithubContributions, and Contact.",
+      "Keep the existing @media (prefers-reduced-motion: reduce) block in src/index.css that resets scroll-behavior, which is already correct.",
+      "Playwright with reduced motion: newContext({ reducedMotion: 'reduce' }), load the page, and assert every section's text is visible with computed opacity 1 immediately, with no transform offset.",
+      "Playwright with default motion: assert the entry animations still play for normal visitors, so the visual design is preserved.",
+      "Playwright: disable JavaScript, load the built preview, and assert section text is still visible with opacity 1 (this is what validates the prerender path).",
+      "Assert no inline opacity:0 remains in the built HTML: after RENDER-002 lands, `grep -o 'opacity:0' dist/index.html | wc -l` must output 0."
+    ]
+  },
+  {
+    "id": "RENDER-002",
+    "category": "rendering",
+    "priority": 5,
+    "description": "Prerender the single route to static HTML so crawlers and link-preview bots receive real content. The deployed page is currently a 1212-byte empty shell containing only <div id=\"root\"></div>, so search engines and social scrapers see no content. Use native Vite SSG (vite build --ssr plus renderToString) rather than Vike or a migration to Astro or Next: the site has exactly one route and no router, so SSG costs about 30 lines of config and zero component rewrites, whereas a framework migration would mean rewriting all 8 components for no additional SEO benefit. Note that vite-plugin-ssr has been renamed Vike, so that package name is outdated. Depends on RENDER-001.",
+    "passes": false,
+    "browserTest": true,
+    "steps": [
+      "Confirm RENDER-001 is complete first; prerendering before it would bake opacity:0 into the static HTML.",
+      "Create src/entry-server.jsx exporting a render() function that returns renderToString(<App />).",
+      "Change src/main.jsx from createRoot to hydrateRoot so the client attaches to the prerendered markup instead of discarding it.",
+      "Create scripts/prerender.mjs that injects the rendered markup into the <div id=\"root\"> of the built dist/index.html template.",
+      "Update the build script to: node scripts/fetch-github.mjs && vite build && vite build --ssr src/entry-server.jsx --outDir dist/server && node scripts/prerender.mjs",
+      "Ensure GithubContributions renders its loading state during SSR without touching window, document, or fetch, so the server build does not throw.",
+      "Assert content is in the static HTML: `grep -c 'Senior full stack engineer' dist/index.html` must output at least 1.",
+      "Assert the shell is no longer empty: dist/index.html must be substantially larger than the current 1212 bytes.",
+      "Assert all 7 section headings appear in dist/index.html: About, Technologies, Experience, Projects, GitHub Contributions, Get in Touch.",
+      "Playwright: load the preview build with JavaScript disabled and assert the h1 and all section headings are visible.",
+      "Playwright: with JavaScript enabled, assert zero hydration mismatch errors are logged to the console.",
+      "Confirm interactive behavior still works post-hydration: nav anchor links scroll, and the contributions graph populates.",
+      "After deploying, confirm `curl -s https://www.dilshersingh.com | grep -c 'Senior full stack'` returns at least 1."
+    ]
+  },
+  {
+    "id": "POLISH-001",
+    "category": "polish",
+    "priority": 10,
+    "description": "Add a 404 page and fix the page background. Unmatched paths currently return a bare unstyled 404. Separately, the dark background is painted by a fixed div with z-[-1] in src/App.jsx rather than on the body, so overscroll and rubber-band areas flash white, and the negative z-index would break if any ancestor ever creates a stacking context.",
+    "passes": false,
+    "browserTest": true,
+    "steps": [
+      "Create public/404.html styled consistently with the site, including a link back to the homepage. Vercel serves this automatically for unmatched paths on static deployments.",
+      "Set the bg-neutral-950 background on body (or html) in src/index.css so the dark ground is robust independent of the fixed div.",
+      "Playwright: navigate to /nonexistent-page-xyz and assert the response status is 404 and the custom page content renders.",
+      "Playwright: assert the 404 page's link back to the homepage works.",
+      "Playwright: scroll past the top of the document to trigger overscroll and assert no white gutter appears.",
+      "Confirm smooth scrolling still works and is still gated by the existing reduced-motion query in src/index.css."
+    ]
+  },
+  {
+    "id": "POLISH-002",
+    "category": "code-quality",
+    "priority": 11,
+    "description": "Remove duplication and centralize constants. The CHIP class string is copy-pasted identically into Experience.jsx and Projects.jsx, with comments in both files acknowledging the duplication. The social links exist twice: as a data-driven SOCIALS array in Navbar.jsx and as hand-written triplicate markup in Contact.jsx. The GitHub URL is hardcoded in three components and the GitHub username is hardcoded inside the GraphQL query, even though every other value is centralized in src/constants/index.js.",
+    "passes": false,
+    "browserTest": false,
+    "steps": [
+      "Extract the shared CHIP class string into a single exported constant and import it in both Experience.jsx and Projects.jsx.",
+      "Export the SOCIALS array from a shared module and have Contact.jsx consume it instead of its hand-written markup, preserving each link's existing aria-label and title.",
+      "Move the hardcoded GitHub URL and username into src/constants/index.js and reference them from Navbar.jsx, Projects.jsx, GithubContributions.jsx, and the GraphQL query.",
+      "Fix the navigation label mismatch: the nav item reads 'Skills' while the section heading reads 'Technologies'. Make them consistent.",
+      "Replace the content-derived React key in About.jsx (key={paragraph.slice(0, 24)}, which collides if two paragraphs share a 24-character prefix) with the array index, which is safe for this static array.",
+      "Assert the duplication is gone: `grep -rc 'https://github.com/dilsher07singh' src/components/ | grep -v ':0' | wc -l` must output 0.",
+      "Run `yarn lint` and confirm it passes with no new warnings.",
+      "Confirm all 5 social links and all technology chips still render identically and still point to the correct URLs."
+    ]
+  },
+  {
+    "id": "POLISH-003",
+    "category": "tooling",
+    "priority": 15,
+    "description": "Harden the toolchain. The ralph.sh automation loop invokes `npm run typecheck` and `npm run test`, but neither script exists in package.json and no test framework is installed, so those feedback loops cannot currently pass. There is also no accessibility linting, no pinned Node version, the react-hooks ESLint plugin sits on a release candidate, and README.md is still unmodified create-vite boilerplate.",
+    "passes": false,
+    "browserTest": false,
+    "steps": [
+      "Decide and implement how the loop's feedback gates resolve: either add real typecheck and test scripts (Vitest plus Playwright, which also enables every browserTest item in this PRD), or update ralph.sh and ralph-once.sh to invoke `yarn lint` and `yarn build`, which do exist. Do not leave the loop referencing scripts that are absent.",
+      "Add eslint-plugin-jsx-a11y and enable its recommended rules so the accessibility fixes in this PRD cannot silently regress.",
+      "Re-enable the react/jsx-no-target-blank rule currently disabled in eslint.config.js; the code already complies, so this only restores the guardrail.",
+      "Move eslint-plugin-react-hooks off the 5.1.0-rc.0 release candidate onto a stable release.",
+      "Add .nvmrc and an engines field pinning Node 22 to match the local toolchain, since nothing currently constrains the build host's Node version.",
+      "Replace the boilerplate README.md with real documentation: what the project is, how to run it, the required GITHUB_TOKEN env var, and the prerender build pipeline.",
+      "Assert every script the automation references actually exists: for each of typecheck and test, `node -e \"process.exit(require('./package.json').scripts.typecheck ? 0 : 1)\"` must exit 0, or confirm the shell scripts no longer reference them.",
+      "Run the full gate end to end and confirm it passes: lint, typecheck, test, build."
+    ]
+  },
+  {
+    "id": "CONTENT-001",
+    "category": "content",
+    "priority": 16,
+    "description": "Produce a written content review as a deliverable only. Per explicit instruction, propose rewrites but do not modify any copy. Write docs/content-review.md with before and after rewrites for each finding below, and wait for approval before any wording changes.",
+    "passes": false,
+    "browserTest": false,
+    "steps": [
+      "Flag the voice shift: HERO_CONTENT opens in third person ('Senior full stack engineer with 5 years...') then switches to first person ('I built...') mid-paragraph.",
+      "Flag metric repetition: '5 years', '8,700+ payout cycles at 100% on-time', '9.1/10 Hacken audit', 'team of 5', and '1,500+ assets' each appear in 2 to 4 separate places across HERO_CONTENT, ABOUT_TEXT, METRICS, EXPERIENCES, PROJECTS, and the meta tags, so a reader scrolling top to bottom encounters the same four figures repeatedly. Propose which single location should own each figure.",
+      "Flag number density: the first Experience entry carries more than 20 discrete figures, and bullet 6 is a 47-word single sentence containing a parenthetical list. Propose splitting it.",
+      "Flag the unhedged absolute claim 'so no settlement event is silently dropped' and propose a mechanism-based rewrite that is defensible in an interview.",
+      "Flag the label mismatch: the METRICS label reads 'Years building production systems' while the hero prose says 'production financial infrastructure'.",
+      "Flag that the WhatsApp contact is a +91 India number (wa.me/919740071441) while the site positions Hong Kong residency throughout, and note this is the user's call.",
+      "Flag that Hardhat and ethers.js render the identical Ethereum icon because react-icons v5 has no SiHardhat, which reads as a mistake in the technology grid. Suggest a custom SVG or a text-only chip.",
+      "Deliver docs/content-review.md and explicitly confirm that no file under src/ was modified by this item: `git diff --name-only src/ | wc -l` must output 0 for this item's commit."
+    ]
+  }
+]

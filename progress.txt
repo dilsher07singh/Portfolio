@@ -1,0 +1,81 @@
+PROGRESS LOG
+============
+
+--------------------------------------------------------------------------
+2026-08-12 — SEC-001 (priority 1, security): GitHub token removed from bundle
+--------------------------------------------------------------------------
+
+WHAT WAS DONE
+Picked SEC-001 as highest priority: a GitHub PAT was being inlined into the
+client bundle by Vite (VITE_ prefix) and sent as an Authorization header from
+the browser, so every visitor could read it. Confirmed the leak was real before
+starting — the token literal was present in dist/assets/index-CchD9gBS.js.
+
+Changes:
+- .env: renamed VITE_GITHUB_KEY -> GITHUB_TOKEN (no VITE_ prefix, so Vite can
+  never inline it). .env remains gitignored (.gitignore:14).
+- .env.example: new, documents GITHUB_TOKEN and the read:user scope.
+- scripts/fetch-github.mjs: new. Reads process.env.GITHUB_TOKEN, POSTs the same
+  contributionsCollection GraphQL query, writes public/github-contributions.json.
+- package.json: build is now
+    node --env-file-if-exists=.env scripts/fetch-github.mjs && vite build
+  Deliberately NOT an npm "prebuild" lifecycle hook — this repo is on Yarn 1.22
+  today, but Yarn Berry drops pre/post script support, and RENDER-002 already
+  specifies this exact inlined form. --env-file-if-exists loads .env locally;
+  on Vercel the value comes from process.env directly.
+- package.json / yarn.lock: axios removed (it existed for this one request).
+  Side benefit: main JS chunk went 335KB -> 299KB (gzip 112KB -> 100KB).
+- src/components/GithubContributions.jsx: now fetch("/github-contributions.json").
+  The loading|ready|error state machine and the `cancelled` cleanup flag are
+  preserved exactly as they were.
+- public/github-contributions.json: generated and COMMITTED on purpose (see below).
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems
+- yarn build -> pass
+- grep -rl 'ghp_' dist/ | wc -l                    -> 0
+- literal token value grepped across dist/         -> 0 files
+- grep -r 'VITE_GITHUB_KEY' src/ scripts/ | wc -l  -> 0
+- grep -rn 'import.meta.env' src/ | wc -l          -> 0
+- env -u GITHUB_TOKEN node scripts/fetch-github.mjs -> exits 0, skips writing
+- vite preview: /github-contributions.json -> 200 application/json
+SEC-001 is browserTest:false, so the above code/CLI verification is sufficient
+per the instructions; I still ran the preview server since it cheaply proves the
+new fetch path actually resolves.
+
+>>> TWO HUMAN ACTIONS ARE STILL OUTSTANDING — I COULD NOT DO THESE <<<
+1. Add GITHUB_TOKEN to the Vercel project environment variables (dashboard).
+   Until this is done, production builds will hit the "token not set" path.
+   That is SAFE, not broken: the script exits 0 and the committed
+   public/github-contributions.json is served as a fallback. The graph will
+   simply show data frozen as of this commit (1,582 contributions) instead of
+   refreshing each deploy.
+2. REVOKE THE OLD TOKEN at https://github.com/settings/tokens. It is still live
+   and it is baked into the bundle that is currently deployed, so it must be
+   treated as compromised regardless of this fix. Confirm it is dead with:
+     curl -s -o /dev/null -w '%{http_code}' \
+       -H 'Authorization: Bearer <OLD_TOKEN>' https://api.github.com/user
+   must return 401. Then put the NEW token in Vercel per action 1.
+
+DESIGN NOTES FOR WHOEVER IS NEXT
+- fetch-github.mjs never fails the build. Missing token, non-200, or a bad
+  payload all log a warning and exit 0, leaving the committed JSON in place. A
+  GitHub outage should not be able to break a deploy. If you'd rather have hard
+  failures, that's the `skip()` helper at the top of the file.
+- The GitHub username is still hardcoded in two places: scripts/fetch-github.mjs
+  (USERNAME const) and the error-state link in GithubContributions.jsx.
+  POLISH-002 explicitly owns centralizing this into src/constants/index.js —
+  I left it alone rather than half-doing that item.
+- The day colors in the JSON are GitHub's light-theme palette (#ebedf0 for an
+  empty day), which is what the old runtime query returned too. Unchanged
+  behavior, but worth knowing if the heatmap ever looks washed out on the dark
+  background.
+- GithubContributions still renders its loading state when JS hasn't run, and
+  the fetch lives in useEffect, so it should not obstruct RENDER-002's SSR pass.
+
+SUGGESTED NEXT ITEM
+SEO-001 (priority 2) is nearly free — public/og-image.jpg is already on disk at
+90KB and untracked; it just needs to be committed so og:image stops 404ing.
+Note it is currently untracked in git and I did NOT include it in this commit.
+RENDER-001 (priority 2) is the bigger, more valuable piece of work and is a hard
+prerequisite for RENDER-002.
