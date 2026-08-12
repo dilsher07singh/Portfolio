@@ -2295,3 +2295,136 @@ CONTENT-001 (priority 16) is the only item left. It is docs-only: write
 docs/content-review.md and change no copy — its step 8 asserts
 `git diff --name-only src/ | wc -l` is 0 for that commit. The PRD is NOT
 complete until it is done.
+
+--------------------------------------------------------------------------
+2026-08-12 — CONTENT-001 (priority 16, content): docs/content-review.md
+             written. NO COPY CHANGED — that is the deliverable.
+             >>> THIS WAS THE LAST OPEN ITEM. THE PRD IS COMPLETE. <<<
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+It was the only item left with passes:false. Every other one of the 20 items in
+plans/prd.json was already true on arrival.
+
+WHAT WAS DONE
+Wrote docs/content-review.md (new file, ~340 lines; docs/ did not exist before).
+It covers all 7 findings from the item's steps 1-7, each with a Before block
+quoting the LIVE string and an After block proposing a replacement, and each
+carrying file:line so a future loop could apply them mechanically.
+
+>>> THE POINT OF THIS ITEM IS THAT NOTHING SHIPPED. DO NOT "FINISH" IT BY
+>>> APPLYING THE REWRITES. <<<
+The item says, explicitly: propose rewrites but do not modify any copy, and wait
+for approval. So index.html and every file under src/ are byte-identical to
+982d1c5. Step 8's assertion:
+    git diff --name-only src/ | wc -l          -> 0
+    git status --short --untracked-files=no    -> empty
+This commit touches docs/content-review.md, plans/prd.json and progress.txt only.
+Every rewrite in that doc is inert until the user approves it. If the user comes
+back with "yes, apply them", that is a NEW item — write it into the PRD rather
+than doing it under CONTENT-001's name.
+
+FEEDBACK LOOPS — all four POLISH-003 gates green
+- yarn lint      -> pass, 0 problems
+- yarn typecheck -> pass
+- yarn test      -> 15 passed, 3 files
+- yarn build     -> pass (only the documented fetchPriority SSR warning)
+- prerender still injects 56,540 characters — byte-for-byte the figure A11Y-006
+  and POLISH-003 both recorded. That is the proof no copy moved.
+CONTENT-001 is browserTest:false and changes no rendered output, so no browser
+pass was needed or run. Environment was clean for once: no stale vite on port
+3000, node_modules/.bin populated (31 entries), no toolchain repair needed. That
+is the first loop in a while without an environment gotcha.
+
+>>> I AM CORRECTING ONE OF THIS ITEM'S OWN PREMISES <<<
+Step 3 says EXPERIENCES[0] "bullet 6 is a 47-word single sentence". It is 31
+words (251 characters, measured, not eyeballed), and the longest bullet in that
+entry is bullet 2 at 36 words. The count is stale from an earlier draft of the
+copy. I proposed the split anyway because the substance holds — bullet 6 is one
+sentence, carries a four-item parenthetical, and joins two unrelated
+achievements (repo tooling + a hosting migration) with a bare "and".
+Step 3's other half CHECKS OUT: EXPERIENCES[0] carries 20 discrete figures in
+177 words, about one every 8-9 words. (21 if you count 2-of-3 as two. I excluded
+"AWS EC2" and "PM2" — a naive digit regex counts those and inflates the number.)
+This is the fifth PRD premise a loop has had to correct (see A11Y-001's severity
+framing, A11Y-002 step 4, A11Y-003's "15 interactive elements", A11Y-004 step 7,
+RENDER-002's stale byte count). MEASURE THE CLAIM BEFORE YOU RESTATE IT.
+
+WHAT THE REVIEW ACTUALLY FOUND, IN CASE YOU ONLY READ THIS FILE
+1. HERO_CONTENT opens third person ("Senior full stack engineer with 5 years…")
+   then switches to first at sentence 2. Every other block on the site is first
+   person, so the opener is the outlier. Two rewrites offered; recommended the
+   first-person one.
+2. Metric repetition, counted exactly: "5 years" 3 on-page + 3 meta tags;
+   "8,700+/100% on-time" 3; "9.1/10 Hacken" 3; "team of 5" 4; "1,500+" 2.
+   The About and Experience payout clauses are BYTE-IDENTICAL substrings — the
+   exact string occurs twice in constants/index.js, it is not a paraphrase.
+   Proposed rule: METRICS is an index, so a figure appears at most twice — once
+   as a tile, once in the single prose location that supplies its mechanism —
+   plus a per-figure owner table and a Before/After for each drop.
+3. Number density, above.
+4. >>> THE ONE URGENT FINDING <<< EXPERIENCES[0] bullet 3 claims "so no
+   settlement event is silently dropped" — a universal negative about a
+   distributed system that a fallback chain cannot establish. It is the sentence
+   on the page most likely to be challenged in an interview. TWO rewrites are
+   given ON PURPOSE, because the honest one depends on a fact I cannot verify
+   from this repo: option A names a dead-letter/alert path and is only usable if
+   that path really exists in the (private) codebase; option B is scope-limited
+   and unimpeachable. That caveat is stated in the doc, not buried.
+5. METRICS[0].label says "production systems" while the hero prose and all three
+   meta tags say "production financial infrastructure". Recommended "Years
+   building financial infrastructure" — NOT the hero's exact phrase — because
+   the four labels run 4/4/4/5 words in a lg:grid-cols-4 grid and six words
+   risks wrapping one tile taller than its neighbours. Copy change with a
+   layout consequence; check tile heights at >=1024px if you apply it.
+6. The WhatsApp link is +91 (India) while the site says Hong Kong everywhere.
+   LESS SEVERE THAN IT READS, and the doc says so: Contact.jsx:78-90 renders
+   that entry ICON-ONLY, so the digits never appear as visible text — only in
+   the href, the hover status bar and the DOM. Four options, left as the user's
+   call exactly as the step requires.
+7. Hardhat and ethers.js both map to SiEthereum (Technologies.jsx:34-35).
+   Verified against the INSTALLED dependency, not from memory: react-icons is
+   5.3.0 and SiHardhat has 0 matches in react-icons/si. Two things the step
+   could not have known: the two entries are ADJACENT in TECHNOLOGIES (13 and 14
+   of 14) so they render side by side, and they carry DIFFERENT colours
+   (yellow-500 vs indigo-400) — one glyph twice, which reads as a bug.
+   >>> TRAP: react-icons DOES ship PiHardHat / LiaHardHatSolid. Those are
+   CONSTRUCTION HELMETS, not the Hardhat framework logo. Putting one in a
+   developer-tools grid is worse than the duplicate. <<<
+   Recommended dropping Hardhat from the grid (the skill survives on
+   EXPERIENCES[1].technologies) over a custom SVG (Nomic Foundation trademark)
+   or icon:null (which needs zero component change — Technologies.jsx:67 already
+   guards with {Icon ? … : null}, so it is a one-word data edit as a stopgap).
+
+THREE OUT-OF-SCOPE OBSERVATIONS, recorded in the doc, NO action proposed
+- HIGHLIGHTS gives the degree as 2018-2022 beside a Sep 2021 full-time start.
+  Ordinary (final-year employment), needs no explanation on the page.
+- PROJECTS[2] links to notion-clone-youtube-six.vercel.app. The hostname says
+  "youtube tutorial" next to a card describing original work. Not a copy defect
+  — the description claims nothing — but renaming the Vercel project would fix
+  it without touching a word.
+- Contact.jsx:43-45 is the only body copy outside src/constants/. If anyone ever
+  centralizes copy, that is the straggler.
+
+STILL OUTSTANDING — ALL HUMAN ACTIONS, NONE DONE, CARRIED FORWARD AGAIN
+- SEC-001: add GITHUB_TOKEN to the Vercel project env vars.
+- SEC-001: REVOKE THE LEAKED GITHUB TOKEN. It is still live and still in the
+  deployed bundle. This is the oldest and most serious open action in this file.
+- SEO-001: post-deploy og-image 200 check + LinkedIn/X cache re-scrape.
+- PERF-003: post-deploy Cache-Control checks.
+- RENDER-002: post-deploy `curl -s https://www.dilshersingh.com | grep -c
+  'Senior full stack'`.
+- CONTENT-001 adds one: the user must decide whether to accept any of the seven
+  proposals in docs/content-review.md.
+
+STILL UNOWNED BY ANY PRD ITEM
+- The sticky header does not stick (diagnosis in the A11Y-003 entry).
+- The heatmap renders as a solid white rectangle in forced-colors mode
+  (A11Y-005 entry).
+- Four empty junk directories in the repo root from a botched invocation
+  (POLISH-003 entry). `rmdir` them safely.
+
+SUGGESTED NEXT ITEM
+None. All 20 items in plans/prd.json are passes:true. There is no next item —
+the automation loop has nothing left to pick up. The remaining work is the human
+actions listed above, and whatever the user decides about the content proposals.
