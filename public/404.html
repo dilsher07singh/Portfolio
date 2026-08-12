@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- An error page should never be indexed or offered as a search result. -->
+    <meta name="robots" content="noindex, follow" />
+
+    <link rel="icon" type="image/svg+xml" href="/dilsher2.svg" />
+    <meta name="theme-color" content="#0a0a0a" />
+
+    <title>Page not found | Dilsher Singh</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400..600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!--
+      This page lives in public/, which Vite copies verbatim — it is never
+      processed by Tailwind or the bundler, so the styles below are hand-written
+      rather than utility classes. The values are the site's own: neutral-950
+      ground, neutral-300 body copy, neutral-400 secondary text, purple-400
+      accent, and the same 2px #c084fc focus ring as src/index.css.
+    -->
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background-color: #0a0a0a;
+        color: #d4d4d4;
+        font-family: "Inter", ui-sans-serif, system-ui, -apple-system,
+          "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.6;
+        letter-spacing: -0.011em;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Mirrors the fixed painter div in src/App.jsx. */
+      .backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background-image: radial-gradient(
+          ellipse 80% 80% at 50% -20%,
+          rgba(120, 119, 198, 0.3),
+          rgba(255, 255, 255, 0)
+        );
+      }
+
+      main {
+        max-width: 34rem;
+        text-align: center;
+      }
+
+      .code {
+        margin: 0;
+        font-size: clamp(4rem, 18vw, 7rem);
+        font-weight: 500;
+        line-height: 1;
+        letter-spacing: -0.05em;
+        /*
+          Stops bottom out at purple-500, matching the Hero's own gradient.
+          purple-700 was tried first and measured 2.20:1 against the brightest
+          point of the backdrop — under the 3:1 large-text floor.
+        */
+        background-image: linear-gradient(to right, #f3e8ff, #c084fc, #a855f7);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+
+      h1 {
+        margin: 1.5rem 0 0;
+        font-size: clamp(1.5rem, 5vw, 2.25rem);
+        font-weight: 400;
+        letter-spacing: -0.025em;
+        color: #f5f5f5;
+      }
+
+      p {
+        margin: 1rem 0 0;
+        color: #a3a3a3;
+      }
+
+      .home {
+        display: inline-block;
+        margin-top: 2.5rem;
+        padding: 0.75rem 1.75rem;
+        border: 1px solid #404040;
+        border-radius: 0.75rem;
+        background-color: rgba(23, 23, 23, 0.4);
+        color: #c084fc;
+        text-decoration: none;
+        transition: border-color 150ms ease, color 150ms ease;
+      }
+
+      .home:hover {
+        border-color: rgba(147, 51, 234, 0.6);
+        color: #d8b4fe;
+      }
+
+      :focus-visible {
+        outline: 2px solid #c084fc;
+        outline-offset: 2px;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .home {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="backdrop"></div>
+
+    <main>
+      <p class="code">404</p>
+      <h1>This page doesn&rsquo;t exist</h1>
+      <p>
+        The link may be out of date, or the address might have a typo in it.
+        Everything I&rsquo;ve published lives on the home page.
+      </p>
+      <a class="home" href="/">Back to dilshersingh.com</a>
+    </main>
+  </body>
+</html>

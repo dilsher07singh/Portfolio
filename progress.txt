@@ -898,3 +898,183 @@ work, and PERF-003 step 1 depends on SEO-003's preconnect hints.
 Still worth promoting out of order: POLISH-001 (priority 10). Its one-line body
 background fix unblocks honest axe runs for A11Y-004/005/006, and the sticky
 header finding above sits in the same file.
+
+--------------------------------------------------------------------------
+2026-08-12 — POLISH-001 (priority 10, polish): custom 404 page, and the
+             one-line body background that finally makes axe usable here
+--------------------------------------------------------------------------
+
+WHY THIS ONE, OUT OF PRIORITY ORDER
+SEO-002 (priority 6) was nominally next, but it is a <meta name="keywords">
+deletion whose real-world impact is approximately zero — search engines have
+ignored that tag for a decade. POLISH-001 fixes two defects that are live and
+visible (a white gutter on overscroll, and a bare unstyled 404 on every
+mistyped URL) AND removes the thing that has been blocking honest a11y
+measurement on this repo. The A11Y-002 loop, the RENDER-002 loop and the
+A11Y-003 loop all independently recommended promoting it. Three loops in a row
+is enough. SEO-002 is UNTOUCHED and is now the cheapest item on the board.
+
+WHAT WAS DONE — TWO CHANGES, THAT IS ALL
+1. src/index.css: `@layer base { body { @apply bg-neutral-950 } }`
+2. public/404.html: new, hand-written, self-contained.
+
+>>> THE PAYOFF: AXE NOW MEASURES THIS PAGE HONESTLY. NO WORKAROUND. <<<
+This is the part that matters for A11Y-004/005/006.
+
+    before, raw           86 color-contrast VIOLATIONS (all false positives)
+    before, with the
+    A11Y-002 workaround   0 violations / 86 passes / 30 incomplete
+    NOW, no workaround    0 violations / 98 passes / 19 incomplete
+
+I verified there was no cheating: document.body's inline style attribute is
+null during the scan. A full all-rules axe run is also 0 violations.
+Incomplete fell 30 -> 19 and passes rose 86 -> 98, so 12 nodes that axe
+previously refused to judge are now measurable. THE A11Y-002 ENTRY'S WARNING
+("do not trust a raw axe scan here") IS NOW OBSOLETE — delete that caveat from
+your mental model, raw scans are trustworthy from this commit on.
+
+The 19 that remain incomplete are the radial gradient ("background color could
+not be determined due to a background gradient") plus a few "content too
+short". That gradient still lives on the fixed painter div, and NO body rule
+can fix it — expect those 19 to stay incomplete forever unless someone moves
+the gradient. Measure those nodes from pixels (recipe in the A11Y-002 entry,
+which still works and which I re-confirmed below).
+
+WHY A ONE-LINE CSS RULE FIXES BOTH THINGS
+<html> is transparent; <body> is now rgb(10,10,10). Per CSS background
+propagation the body colour paints the CANVAS, and the canvas is what fills
+the rubber-band area outside the document. The fixed painter div only ever
+covers the VIEWPORT, which is exactly why overscroll flashed white. The same
+transparency is why axe walked up the DOM, found nothing, and fell back to
+assuming white.
+
+I PROVED BOTH HALVES RATHER THAN ASSERTING THEM:
+- painter div set to display:none  -> page still fully dark and legible, only
+  the subtle gradient missing. That is literally step 2's wording, "robust
+  independent of the fixed div".
+- painter hidden AND the new body rule neutralised -> page renders on WHITE
+  with washed-out unreadable light-grey text. That screenshot IS the defect,
+  and it is also a perfect picture of what axe was seeing when it reported
+  fg=#d4d4d4 bg=#ffffff 86 times.
+
+>>> SCOPE CALL: I DID NOT FULLY KILL THE z-[-1] PAINTER. READ BEFORE POLISH-002
+>>> OR ANY LAYOUT WORK. <<<
+This item's description also complains that the negative z-index "would break
+if any ancestor ever creates a stacking context". That fragility is REDUCED
+(the base colour no longer depends on it) but NOT REMOVED — the div still
+exists and still owns the radial gradient.
+I left it deliberately. The gradient is viewport-anchored by `fixed`; moving it
+to body means either stretching it over the full document height (visibly
+different — it becomes a washed-out smear instead of a top glow) or
+background-attachment:fixed, which is unreliable on iOS Safari and janky on
+mobile generally. The base colour is 100% of what overscroll and axe need, so
+I took that and left the design-affecting half alone.
+
+>>> vite preview CANNOT TEST A 404. DO NOT TRY. <<<
+`vite preview` is SPA-fallback: every unmatched path returns index.html with
+status 200, so step 3 is untestable against it — you will get a false pass
+showing the homepage. I served dist/ with a ~30-line Node stand-in that
+replicates Vercel static hosting (exact file match, else /404.html at status
+404). Test-only, lives in /tmp, NOT committed. Results:
+    /                      -> 200
+    /nonexistent-page-xyz  -> 404  + "Page not found | Dilsher Singh"
+    /404.html              -> 200
+    CTA click              -> navigates to / and loads the real homepage
+If you need to re-test the 404 path later, rebuild that stand-in; do not reach
+for vite preview.
+
+THE 404 PAGE IS HAND-WRITTEN CSS ON PURPOSE
+public/ is copied VERBATIM and is never seen by Tailwind or the bundler, so
+utility classes in there would silently do nothing at all. Every value mirrors
+the site by hand: neutral-950 ground, #d4d4d4/#a3a3a3 text, purple-400 accent,
+the identical radial gradient, and the same 2px #c084fc / 2px-offset focus ring
+A11Y-003 established. It also carries robots noindex, which an error page
+should. If you restyle the site, this file will NOT follow automatically.
+
+>>> I INTRODUCED A CONTRAST DEFECT AND CAUGHT IT BEFORE COMMITTING <<<
+The big "404" numeral is gradient text. I first wrote it ending at purple-700
+(#7e22ce), which measures 2.20:1 against the brightest backdrop pixel — under
+the 3:1 large-text floor. Changed to purple-500 #a855f7 (3.88:1), which has the
+bonus of matching Hero.jsx's existing `to-purple-500`.
+I only caught it because axe reports ALL FOUR text nodes on the 404 page as
+"incomplete" (the gradient again), i.e. axe measured NOTHING there and happily
+reported "0 violations". A 0 with 0 passes is not a pass. So I measured from
+rendered pixels: hid the content, screenshotted the ground, found the brightest
+pixel = rgb(36,35,53) — which independently reproduces the A11Y-002 loop's
+rgb(35,35,53), a nice cross-check that the method is sound. Against it:
+    h1 #f5f5f5           14.09:1  (needs 3)    PASS
+    body copy #a3a3a3     6.09:1  (needs 4.5)  PASS
+    link #c084fc          5.81:1  (needs 4.5)  PASS
+    gradient stops        5.81 / 3.88:1        PASS
+Same numbers at 1280 and 375. LESSON WORTH KEEPING: on this site always check
+axe's PASS count, not just its violation count. Zero violations with zero
+passes means the gradient defeated it and you have measured nothing.
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems
+- yarn build -> pass (only the documented fetchPriority SSR warning that
+  RENDER-002's notes say explicitly not to "fix")
+- dist/404.html copied byte-identical to public/404.html (cmp clean)
+- built CSS contains body{--tw-bg-opacity:1;background-color:rgb(10 10 10/...)}
+- step 3: 404 status + custom page confirmed (above)
+- step 4: CTA link back to the homepage works
+- step 5: canvas source is now <body>; painter-hidden test dark; pre-fix
+  simulation white
+- step 6: default scrollBehavior 'smooth' and a nav click GENUINELY ANIMATES —
+  55 distinct intermediate scroll positions over 0 -> 3263, so it is not an
+  instant jump; under emulated prefers-reduced-motion:reduce it flips to
+  'auto'. The existing gate is intact and I did not touch it.
+  scroll-padding-top still 96px.
+- 404 page: 0 axe violations all-rules, focus ring 2px solid rgb(192,132,252)
+  offset 2px, no horizontal overflow at 375 or 780
+- homepage unregressed: painter + gradient still there, 30 reveals all reach
+  opacity 1 after a full scroll pass, hero h1 opacity 1, no overflow at 1280
+  or 375, only console error is the pre-existing fonts.googleapis.com cert
+  failure
+
+>>> FINDING: A11Y-004's STEP 7 IS ALREADY VACUOUS. DO NOT USE IT AS THE GATE. <<<
+While I had a trustworthy axe I checked the rules A11Y-004 plans to assert on.
+BOTH ALREADY PASS TODAY, before that item is implemented:
+    region  -> 674 nodes PASSING, 0 violations
+    bypass  -> 1 node PASSING, 0 violations
+Because everything already sits inside <main>, which satisfies both rules. So
+"assert zero violations for the 'region' and 'bypass' rules" cannot detect the
+defect A11Y-004 describes — it will pass before AND after the work and prove
+nothing. The real acceptance test is that item's step 6: getByRole('region')
+returns 7 entries each with a non-empty accessible name. The underlying defect
+(no skip link, sections not exposed as named landmarks) is still genuinely
+real; only the axe assertion is worthless.
+
+NOTES FOR WHOEVER IS NEXT
+- ENVIRONMENT WAS CLEAN AGAIN (second loop running). node_modules/.bin
+  populated, lint and build worked on arrival, nothing squatting on port 3000.
+  Still worth `ps aux | grep vite` before trusting localhost:3000.
+- ONE NEW ENVIRONMENT FACT: cdnjs.cloudflare.com is NOT reachable from the
+  BROWSER this loop (ERR_CERT_AUTHORITY_INVALID), so the A11Y-002 trick of
+  script-tagging axe from a CDN no longer works. `curl` still reaches it fine
+  through the proxy, so: curl axe.min.js to disk, drop it in dist/, and load it
+  same-origin. That is what I did; I deleted it from dist/ afterwards. Same
+  cert wall is why fonts.googleapis.com always errors in the console here.
+- sharp only resolves from the repo root (it is a local devDependency), so a
+  pixel-measuring script in /tmp will fail to import it. Run such scripts from
+  the repo root.
+- I removed all my test screenshots. experience-view.png and portfolio-full.png
+  at the repo root were already untracked before this loop and are NOT mine —
+  left them alone.
+- STILL OUTSTANDING FROM EARLIER LOOPS, ALL STILL NOT DONE, ALL HUMAN ACTIONS:
+  SEC-001's Vercel GITHUB_TOKEN env var and REVOKING THE LEAKED TOKEN (it is
+  still live and still in the deployed bundle); SEO-001's post-deploy og-image
+  200 check plus the LinkedIn/X re-scrape; RENDER-002's post-deploy
+  `curl -s https://www.dilshersingh.com | grep -c 'Senior full stack'`.
+- Also still unowned by any PRD item: the sticky header does not actually stick
+  (A11Y-003's entry has the diagnosis — root div's overflow-x-hidden). I was in
+  this area and did NOT fix it; it is a visible layout change and still nobody's
+  scope.
+
+SUGGESTED NEXT ITEM
+SEO-002 (priority 6), a single <meta name="keywords"> deletion at index.html
+line 25-28 — genuinely a few minutes, and it is now the top of the queue.
+Then SEO-003 (priority 7), which is the natural pairing since it is also
+index.html head work AND PERF-003 step 1 depends on its preconnect hints.
+A11Y-004 (priority 8) is now fully unblocked and has a trustworthy axe — but
+read the step 7 finding above before you write its tests.

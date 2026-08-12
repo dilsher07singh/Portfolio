@@ -8,6 +8,27 @@
   font-family: "Inter", sans-serif;
 }
 
+/*
+  The dark ground lives on <body>, not only on the fixed painter div in
+  src/App.jsx.
+
+  Two reasons. First, a body background propagates to the canvas, so the
+  overscroll / rubber-band area outside the document is painted too — the fixed
+  div only ever covers the viewport, so scrolling past either end used to flash
+  white. Second, contrast tooling walks the DOM to resolve an element's
+  background; a separate fixed sibling is not something it can attribute, so
+  every text node on the page was being measured against white and axe reported
+  86 false color-contrast violations. With this rule the page is measurable.
+
+  The painter div still owns the radial gradient — that one is viewport-anchored
+  by `fixed` and would stretch over the full document height if it moved here.
+*/
+@layer base {
+  body {
+    @apply bg-neutral-950;
+  }
+}
+
 /* Anchor jumps must clear the sticky navbar. */
 html {
   scroll-behavior: smooth;
