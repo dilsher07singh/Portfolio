@@ -4,8 +4,16 @@ import { FaLinkedin, FaGithub, FaWhatsapp } from "react-icons/fa";
 
 const Contact = () => {
   return (
-    <section id="contact" className="scroll-mt-24 pb-20">
-      <Reveal as="h2" className="my-10 text-center text-4xl">
+    <section
+      id="contact"
+      aria-labelledby="contact-heading"
+      className="scroll-mt-24 pb-20"
+    >
+      <Reveal
+        as="h2"
+        id="contact-heading"
+        className="my-10 text-center text-4xl"
+      >
         Get in Touch
       </Reveal>
 

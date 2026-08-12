@@ -1326,3 +1326,142 @@ section landmarks — and has a trustworthy axe since POLISH-001. Read
 POLISH-001's finding first: A11Y-004's step 7 (region/bypass) ALREADY PASSES
 today and cannot detect the defect; step 6 is the real gate.
 Then PERF-003 (priority 9), newly unblocked by this item.
+
+--------------------------------------------------------------------------
+2026-08-12 — A11Y-004 (priority 8, accessibility): skip-to-content link and
+             7 named section landmarks — plus the focus ring that had to be
+             switched off to make the skip link usable
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+Highest-priority item still open (priority 8), and the previous two loops both
+nominated it. Taken in priority order. PERF-003 (priority 9) is untouched and
+is now the head of the queue.
+
+WHAT WAS DONE
+Two defects in one item, both real:
+
+1. SKIP LINK. src/App.jsx now opens with an <a href="#main"> carrying
+   `sr-only focus:not-sr-only focus:fixed ...`, placed before <Navbar /> so it
+   is the first focusable element in the DOM. <main> gained id="main" and
+   tabIndex={-1}.
+2. LANDMARKS. All 7 sections gained aria-labelledby pointing at their own
+   heading, and each heading gained an id on a `<section>-heading` scheme
+   (hero-heading, about-heading, ...). A11Y-001's notes asked for a prefix
+   distinct from its own `project-title-N` — this is it, and there are 0
+   duplicate ids and 0 dangling idrefs on the page.
+
+The ids ride through Reveal's `...rest` spread, so they land on the real h1/h2
+element. Confirmed all 7 still carry `.reveal` and still reach opacity 1.
+
+NOTE ON STEP 3's WORDING: it says "each section's h2", but Hero has no h2 — its
+heading is the h1 "Dilsher Singh". hero-heading points at the h1, so that
+region is named "Dilsher Singh".
+
+>>> THE PART THAT IS NOT IN THE PRD STEPS, AND THE ONE REAL JUDGEMENT CALL <<<
+tabIndex={-1} on <main> is what makes the skip link move real FOCUS rather than
+only the scroll position. Without it a screen reader's virtual cursor stays up
+in the header and the link only half-works.
+
+But <main> then matches :focus-visible, so A11Y-003's global ring drew a 2px
+purple box around the ENTIRE document — main is ~19,000px tall, so it renders
+as two purple lines running the whole length of the page, and it stays there
+until the visitor clicks or tabs away. I screenshotted it; it is not subtle.
+
+So src/index.css gains, inside @layer base:
+    main:focus,
+    main:focus-visible { outline: none }
+
+THIS IS NOT THE SUPPRESSION A11Y-003 GUARDS AGAINST, and I want to be explicit
+because a future loop will grep this and get suspicious. That rule exists so
+INTERACTIVE controls always show where focus is. <main> is not interactive and
+Tab can never reach it (tabindex -1), so no keyboard user can be stranded on an
+unindicated element. The skip link vanishing and the page jumping are the
+confirmation that the activation worked. A11Y-003's own assertion is intact:
+`grep -rc 'outline-none' src/ index.html` is still 0, and all 20 tab stops
+still report a 2px solid rgb(192,132,252) ring.
+
+DELIBERATE DEVIATION ON STEP 2 — THE LINK DOES OVERLAP THE HEADER
+Step 2 asks that it "not overlap the sticky header". It does, at z-[100] over
+the header's z-50. The header is full-width at top:0, so anything appearing at
+the top of the viewport necessarily overlaps it; the only way to avoid that is
+normal flow, which shifts the entire page down the moment the link is focused.
+What the requirement is actually protecting against is the link being hidden
+BEHIND the header, so I measured that directly instead: the link is the topmost
+element at its own centre (hit-tested with elementFromPoint), has an opaque
+bg-neutral-950 and a purple border, and is fully inside the viewport at both
+1280x800 and 375x700.
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems
+- yarn build -> pass (only the documented fetchPriority SSR warning that
+  RENDER-002's notes say explicitly not to "fix")
+- step 6, THE REAL GATE, from Chrome's actual a11y tree rather than my own DOM
+  math: exactly 7 regions, in document order, named "Dilsher Singh",
+  "About Me", "Technologies", "Experience", "Projects",
+  "GitHub Contributions", "Get in Touch"
+- step 4: one Tab from a fresh load focuses the skip link. 161x38 focused,
+  1x1 with clip rect(0,0,0,0) unfocused. No clipping ancestor. In viewport at
+  1280 and 375. Topmost at its own centre.
+- step 5: Enter -> document.activeElement === main#main, hash #main. The NEXT
+  Tab lands on the first project link, BYPASSING ALL 11 HEADER CONTROLS —
+  exactly the count this item's description claims.
+- full all-rules axe: 0 violations, 37 rules / 1339 nodes passing, 9 incomplete
+  (all color-contrast on the radial gradient). document.body's inline style
+  attribute was null during the scan, so no workaround was in play.
+
+>>> STEP 7 IS VACUOUS. POLISH-001 CALLED THIS AND IT IS CONFIRMED. <<<
+axe's `region` and `bypass` rules report 0 violations — and they did BEFORE
+this work too. POLISH-001 measured region 674 passing / bypass 1; it is now
+region 675 / bypass 1. The +1 is just the skip link. Both rules are satisfied
+merely by content sitting inside <main>, which was already true, so step 7
+cannot detect the defect this item exists to fix and must not be used as its
+acceptance test. Step 6 is the one that means anything. I ran step 7 anyway and
+it passes; I am recording that it proves nothing.
+
+NO REGRESSIONS (checked, not assumed)
+- 0 horizontal overflow at 1280 and 375
+- 30 reveals, 0 stranded after a full viewport-by-viewport scroll pass
+- nav anchor click still scrolls 0 -> 3263, the same figure RENDER-002 and
+  POLISH-001 both recorded; scroll-padding-top still 96px
+- heatmap still populates 368 cells post-hydration
+- 20 tab stops at 1280 (A11Y-003 recorded 19; +1 is the skip link), every one
+  still ringed
+- prerender undisturbed: all 7 aria-labelledby/id pairs, the skip link and
+  tabindex="-1" are all in dist/index.html; 0 inline opacity:0; "Senior full
+  stack engineer" x4; canonical / og:image / twitter:card / ld+json still 1 each
+
+NOTES FOR WHOEVER IS NEXT
+- A11Y-005 will move the copyright into a <footer> in App.jsx. Put it OUTSIDE
+  <main> — main is now the skip target, and sweeping the footer inside it would
+  mean "skip to main content" also skips past... nothing, but it would put a
+  contentinfo landmark inside main, which is invalid nesting.
+- If you add another skip target later, note the outline rule above is scoped
+  to `main` specifically, not to `[tabindex="-1"]`. Widen it if you add one.
+- The environment was CLEAN for the fifth loop running: node_modules/.bin
+  populated, lint and build worked on arrival, nothing squatting on port 3000.
+  I killed my own preview server at the end.
+- I HIT SEO-003's pkill TRAP AGAIN, verbatim: a `kill $(pgrep -f 'vite.*preview')`
+  matched its own bash command line and killed the shell (exit 144), silently
+  skipping the rest of the chain. Use `nohup npx vite preview ... &` to start
+  and check `curl` afterwards rather than trusting the kill.
+- cdnjs is still unreachable from the BROWSER (cert wall), so POLISH-001's
+  recipe is still the way to run axe: curl axe.min.js to dist/, load it
+  same-origin, delete it after. I did and it is gone.
+- STILL OUTSTANDING FROM EARLIER LOOPS, ALL STILL NOT DONE, ALL HUMAN ACTIONS:
+  SEC-001's Vercel GITHUB_TOKEN env var and REVOKING THE LEAKED TOKEN (it is
+  still live and still in the deployed bundle); SEO-001's post-deploy og-image
+  200 check plus the LinkedIn/X re-scrape; RENDER-002's post-deploy
+  `curl -s https://www.dilshersingh.com | grep -c 'Senior full stack'`.
+- Also still unowned by any PRD item: the sticky header does not actually stick
+  (diagnosis in the A11Y-003 entry — the root div's overflow-x-hidden). Now
+  slightly more relevant: the skip link is `fixed`, so it is unaffected, but
+  anyone fixing the header will be editing the same few lines of App.jsx.
+
+SUGGESTED NEXT ITEM
+PERF-003 (priority 9) is now the head of the queue and was unblocked by
+SEO-003: move the Google Fonts @import out of src/index.css into <link> tags
+beside the preconnects, drop the unused italic axis, and add vercel.json with
+cache and security headers. It also kills the fonts.googleapis.com console
+error that every loop has been reporting. Then POLISH-002 (priority 11), or
+A11Y-005 (priority 12) while the a11y context is fresh.

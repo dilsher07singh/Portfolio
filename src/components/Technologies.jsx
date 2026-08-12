@@ -39,9 +39,15 @@ const Technologies = () => {
   return (
     <section
       id="technologies"
+      aria-labelledby="technologies-heading"
       className="scroll-mt-24 border-b border-neutral-700 pb-24"
     >
-      <Reveal as="h2" duration={0.6} className="my-20 text-center text-4xl">
+      <Reveal
+        as="h2"
+        id="technologies-heading"
+        duration={0.6}
+        className="my-20 text-center text-4xl"
+      >
         Technologies
       </Reveal>
 

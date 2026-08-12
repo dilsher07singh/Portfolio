@@ -59,6 +59,27 @@ html {
     outline: 2px solid #c084fc;
     outline-offset: 2px;
   }
+
+  /*
+    The skip link's target. <main> carries tabindex="-1" so activating the skip
+    link moves real FOCUS into the content rather than only the scroll position
+    — without it a screen reader's virtual cursor stays up in the header.
+
+    That focus must not paint a ring. <main> spans the whole document, so the
+    rule above would draw a 2px purple box around every section and leave it
+    there until the visitor clicks or tabs away (measured: main is ~19,000px
+    tall, so it reads as two purple lines running the length of the page).
+
+    This is NOT the outline suppression A11Y-003 guards against. That rule
+    exists so INTERACTIVE controls always show where focus is; main is not
+    interactive and Tab can never reach it, so no keyboard user can be stranded
+    on an unindicated element. The skip link vanishing and the page scrolling
+    are the confirmation that the jump worked.
+  */
+  main:focus,
+  main:focus-visible {
+    outline: none;
+  }
 }
 
 /*

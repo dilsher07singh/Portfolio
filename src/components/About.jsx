@@ -12,19 +12,16 @@ const About = () => {
   return (
     <section
       id="about"
+      aria-labelledby="about-heading"
       className="scroll-mt-24 border-b border-neutral-900 pb-8"
     >
-      <Reveal as="h2" className="my-20 text-center text-4xl">
+      <Reveal as="h2" id="about-heading" className="my-20 text-center text-4xl">
         About <span className="text-neutral-500">Me</span>
       </Reveal>
 
       <div className="flex flex-wrap items-start">
         {/* Bio */}
-        <Reveal
-          from="left"
-          distance={60}
-          className="w-full lg:w-3/5 lg:pr-12"
-        >
+        <Reveal from="left" distance={60} className="w-full lg:w-3/5 lg:pr-12">
           {ABOUT_TEXT.split("\n\n").map((paragraph) => (
             <p
               key={paragraph.slice(0, 24)}

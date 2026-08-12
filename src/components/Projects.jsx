@@ -10,9 +10,14 @@ const Projects = () => {
   return (
     <section
       id="projects"
+      aria-labelledby="projects-heading"
       className="scroll-mt-24 border-b border-neutral-900 pb-4"
     >
-      <Reveal as="h2" className="my-20 text-center text-4xl">
+      <Reveal
+        as="h2"
+        id="projects-heading"
+        className="my-20 text-center text-4xl"
+      >
         Projects
       </Reveal>
 

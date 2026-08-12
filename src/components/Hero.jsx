@@ -10,6 +10,7 @@ const Hero = () => {
   return (
     <section
       id="hero"
+      aria-labelledby="hero-heading"
       className="scroll-mt-24 pb-4 border-b border-neutral-900 lg:mb-16"
     >
       <div className="flex flex-col lg:flex-row">
@@ -28,6 +29,7 @@ const Hero = () => {
             */}
             <Reveal
               as="h1"
+              id="hero-heading"
               from="left"
               duration={HERO_DURATION}
               className="pb-4 text-6xl font-thin tracking-tight lg:mt-16 lg:text-8xl"
