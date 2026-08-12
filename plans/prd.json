@@ -25,8 +25,9 @@
     "category": "seo",
     "priority": 2,
     "description": "Commit the Open Graph image so social link previews work. public/og-image.jpg exists on disk at the correct 1200x630 dimensions and index.html already references it at an absolute URL, but the file is untracked in git. Committing index.html without it leaves og:image returning 404 in production, which is the current live behavior.",
-    "passes": false,
+    "passes": true,
     "browserTest": false,
+    "notes": "Complete and verified 2026-08-12. public/og-image.jpg is now tracked in git (it was staged but never committed by the two prior loops). Verified: `git status --short public/og-image.jpg` reports 'A' then clean after commit; `file` reports 1200x630 baseline JPEG; size is 90,611 bytes (89KB, well under the 300KB budget); `yarn build` copies it byte-for-byte to dist/og-image.jpg (cmp reports identical); `grep -c '/src/assets/dilsherSinghProfile' index.html` outputs 0. index.html needed no edit — og:image, twitter:image and the JSON-LD Person 'image' field all already point at the absolute https://www.dilshersingh.com/og-image.jpg, and og:image:width/height already declare 1200x630 matching the real file. yarn lint passes. INCIDENTAL: node_modules/.bin was empty in this workspace so `yarn lint` failed with 'eslint: command not found' until `yarn install` was run; this produced no package.json or yarn.lock diff. ONE STEP REMAINS AND CANNOT BE AUTOMATED HERE: step 5 requires a deploy first — after deploying, confirm `curl -sI https://www.dilshersingh.com/og-image.jpg -o /dev/null -w '%{http_code}'` returns 200 (it returns 404 today), and re-scrape the URL in the LinkedIn Post Inspector and X Card Validator, since both cache the previous 404 result.",
     "steps": [
       "Run `git add public/og-image.jpg` and confirm `git status --short public/og-image.jpg` no longer shows '??'.",
       "Confirm dimensions are exactly 1200x630: `file public/og-image.jpg` must report '1200x630'.",

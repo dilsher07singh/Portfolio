@@ -165,3 +165,77 @@ NOTES FOR WHOEVER IS NEXT
 SUGGESTED NEXT ITEM
 SEO-001 (priority 2, still a one-line `git add public/og-image.jpg`), then
 RENDER-002 (priority 5) now that its prerequisite is done and pre-validated.
+
+--------------------------------------------------------------------------
+2026-08-12 — SEO-001 (priority 2, seo): og:image is now actually committed
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+It is the highest-priority item still open (priority 2) and it fixes a defect
+that is live right now: every LinkedIn / Slack / X / iMessage preview of
+dilshersingh.com renders with a broken image, because index.html has advertised
+https://www.dilshersingh.com/og-image.jpg since the redesign checkpoint while
+the file itself was never in git. Highest value-to-effort ratio in the PRD.
+Deliberately did NOT touch A11Y-001 or PERF-001 (both priority 3) — one item
+per loop.
+
+WHAT WAS DONE
+Almost nothing, and that is the correct outcome. public/og-image.jpg was
+already staged ("A" in git status) by an earlier loop but had never been
+carried into a commit, so it kept surviving as staged-but-unshipped. This
+commit is what actually ships it. No source file needed editing:
+
+- index.html was already correct and is UNCHANGED. og:image (line 44),
+  twitter:image (line 66) and the JSON-LD Person "image" field (line 76) all
+  already use the absolute production URL, and og:image:width/height already
+  declare 1200x630, which matches the real file.
+- No new files, no deleted files. The diff is one binary blob.
+
+FEEDBACK LOOPS — all green
+- yarn lint                                          -> pass, 0 problems
+- yarn build                                         -> pass
+- file public/og-image.jpg                           -> 1200x630 baseline JPEG
+- size                                               -> 90,611 B (89KB) < 300KB
+- cmp public/og-image.jpg dist/og-image.jpg          -> identical (Vite copies
+                                                        public/ byte-for-byte)
+- grep -c '/src/assets/dilsherSinghProfile' index.html -> 0
+SEO-001 is browserTest:false, so code/CLI verification is sufficient per the
+loop instructions.
+
+>>> HEADS UP: `yarn lint` WAS BROKEN IN THIS WORKSPACE <<<
+node_modules existed (282 packages) but node_modules/.bin was empty, so
+`yarn lint` died with "eslint: command not found" — exit 127, which reads like
+a lint FAILURE rather than a missing binary. `yarn install` fixed it in 4s and
+produced ZERO diff to package.json or yarn.lock. If the automation loop ever
+reports a sudden lint failure, check for this before assuming a code defect.
+
+>>> ONE STEP CANNOT BE DONE FROM HERE — IT NEEDS A DEPLOY <<<
+PRD step 5 asserts the live URL returns 200. It returns 404 today and will keep
+doing so until this commit is deployed. After deploying:
+    curl -sI https://www.dilshersingh.com/og-image.jpg -o /dev/null -w '%{http_code}'
+must print 200. Then re-scrape the page in the LinkedIn Post Inspector and the
+X Card Validator — BOTH CACHE THE PREVIOUS 404 and will keep showing a broken
+preview for days otherwise. This is the same class of outstanding human action
+as SEC-001's two items, which are STILL NOT DONE (Vercel GITHUB_TOKEN env var,
+and revoking the leaked token — that token is still live).
+
+NOTES FOR WHOEVER IS NEXT
+- The image carries 2022-dated EXIF (camera orientation, resolution tags).
+  Harmless for OG scrapers and it is only ~1KB, so I left it rather than
+  re-encoding, which would have meant changing the bytes of a file that three
+  meta tags and the JSON-LD already point at. If PERF-001 ends up adding an
+  image pipeline, note that public/ is copied verbatim and is NOT processed by
+  Vite, so og-image.jpg will not be swept up by it automatically.
+- Do not let a future image-optimization item convert og-image.jpg to WebP.
+  og:image:type is being added as image/jpeg by SEO-003, and several scrapers
+  still handle WebP poorly. Keep this one as JPEG.
+- SEO-002 (priority 6) is the only other index.html-only item and is one
+  deletion (the <meta name="keywords">, still present at line 26).
+
+SUGGESTED NEXT ITEM
+Three items are now tied at priority 3-4 and all are real work:
+A11Y-001 (priority 3) is the cheapest of them — a single aria-label removal in
+Projects.jsx — but it is browserTest:true, so budget for a Playwright pass.
+PERF-001 (priority 3) is the biggest win available: ~4.5MB of images ship to
+render three 200px thumbnails, and dist/assets is 4.5MB right now (project-1.jpg
+alone is 2.2MB). RENDER-002 (priority 5) is still unblocked and pre-validated.
