@@ -1766,3 +1766,122 @@ Contact.jsx, centralize the GitHub URL/username, fix the "Skills" nav label vs
 key. Note its step 2 says to preserve each social link's aria-label AND title —
 A11Y-006 (priority 13) then wants aria-hidden on those same icons, so doing
 POLISH-002 first and A11Y-006 second keeps both clean.
+
+--------------------------------------------------------------------------
+2026-08-12 — POLISH-002 (priority 11, code-quality): one source of truth for
+             the chip, the socials and the GitHub identity
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+Head of the queue. The previous loop took A11Y-005 out of order and explicitly
+left POLISH-002 as the next item; nothing above it is open. Untouched and still
+open after this: A11Y-006 (13), PERF-004 (14), POLISH-003 (15), CONTENT-001 (16).
+
+WHAT WAS DONE
+Eight files. src/constants/site.js is new; index.js, Navbar, Contact,
+Experience, Projects, GithubContributions, About and scripts/fetch-github.mjs
+changed.
+
+- CHIP_CLASS moved into src/constants/index.js. Both Experience.jsx and
+  Projects.jsx carried a byte-identical copy with a comment asking that they be
+  kept in step; that comment is now unnecessary and gone.
+- SOCIALS moved out of Navbar.jsx into src/constants/index.js, gained an `id`
+  field, and Contact.jsx's three hand-written anchors now map over it.
+- GITHUB_USERNAME / GITHUB_URL centralized; four component references and the
+  GraphQL query go through them.
+- NAV_LINKS "Skills" -> "Technologies", matching the section heading.
+- About.jsx key={paragraph.slice(0, 24)} -> key={index}.
+
+>>> STEP 3 FORCES A SECOND CONSTANTS MODULE. THIS IS THE ONE STRUCTURAL CALL. <<<
+The step wants the GraphQL query in scripts/fetch-github.mjs to reference the
+centralized username. It cannot import src/constants/index.js: that file imports
+three .webp files and a .json, which only Vite can resolve, not plain Node.
+So there are now two modules:
+
+  src/constants/site.js   dependency-free. GITHUB_USERNAME, GITHUB_URL.
+                          Imported directly by the Node build script.
+  src/constants/index.js  everything else, and it RE-EXPORTS both of the above
+                          so components keep the single "../constants" path.
+
+If you add another value the build scripts need, put it in site.js and re-export
+it. If you ever add an asset import to site.js, `yarn build` breaks at the
+fetch-github step, which is the good failure mode.
+
+>>> HOW THIS WAS PROVEN BEHAVIOUR-NEUTRAL — THE ONLY CHECK THAT REALLY MATTERS <<<
+A refactor this broad is worth diffing rather than eyeballing. Built HEAD
+(edaa63e) in a git worktree and compared:
+    built app CSS            BYTE-IDENTICAL
+    prerendered index.html   exactly TWO differing lines — the JS bundle hash,
+                             and "Skills" -> "Technologies"
+That single diff covers steps 1, 2 and 8 at once: if any chip, social anchor,
+attribute or ordering had shifted, it would be in it. The CSS being identical
+also proves Tailwind still finds the chip utilities now that the string lives in
+constants/index.js (the content glob is src/**/*.{js,ts,jsx,tsx}, so it does).
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems, no new warnings (baseline was clean too)
+- yarn build -> pass (only the documented fetchPriority SSR warning)
+- step 6: grep -rc 'https://github.com/dilsher07singh' src/components/ \
+          | grep -v ':0' | wc -l   -> 0
+- fetch-github.mjs still exits 0 with the new import ("Request failed: fetch
+  failed" is the sandbox firewall and the designed fallback, unchanged)
+- prerender 57,191 -> 57,197 chars; the +6 is exactly "Technologies" minus
+  "Skills". Bundle 188,845 -> 188,304 bytes from the dedup.
+- in-browser: 31 chips share exactly ONE distinct class string; 5 navbar + 3
+  contact social anchors report identical aria-label / title / href to the
+  baseline in the same order; nav link scrolls to #technologies (scrollY 1802);
+  7 named regions; 1 footer; 30 reveals / 0 stranded; no horizontal overflow
+
+>>> THE ONE THING A STATIC DIFF CANNOT COVER, SO I RAN IT IN A BROWSER <<<
+GithubContributions' ERROR state is not prerendered, so its GitHub link never
+appears in dist/index.html and the diff above says nothing about it. Forced it
+the way the A11Y-002 loop did — moved dist/github-contributions.json aside and
+reloaded. The link resolves to https://github.com/dilsher07singh through the
+constant. Restored the file byte-identical (cmp clean). This item is
+browserTest:false, so this was beyond requirement, but that path was the only
+real unknown.
+
+TWO DECISIONS WORTH KNOWING
+1. Contact still shows 3 socials, not 5. It selects by id from the shared array
+   via an explicit CONTACT_SOCIAL_IDS list, which keeps both the set and its
+   order visible in the file. Rendering all 5 there would have been an
+   unrequested design change. Each entry has ONE `label` that feeds both
+   aria-label and title, which is what step 2 asked to preserve.
+2. index.html's JSON-LD "sameAs" still hardcodes the GitHub URL. It is static
+   HTML with no access to a JS module, and this item's steps scope to src/.
+   If you ever want it centralized, the prerender script is the place to
+   inject it.
+
+GOTCHA IF YOU GO LOOKING FOR THE URL IN THE BUNDLE
+`grep -c 'https://github.com/dilsher07singh' dist/assets/index-*.js` is now 0,
+down from 4, and that is NOT a bug. GITHUB_URL is a template literal built from
+GITHUB_USERNAME, and the minifier keeps it as
+    const o0="dilsher07singh", Bo=`https://github.com/${o0}`
+evaluated at runtime. The prerendered HTML shows the correct absolute URL on
+all 9 anchors, so it resolves. Grep for the username, not the URL.
+
+NOTES FOR WHOEVER IS NEXT
+- A11Y-006 (priority 13) is the natural follow-on and this item was deliberately
+  shaped for it: its step 4 wants aria-hidden on the decorative social icons in
+  Navbar and Contact, and both now render from the SAME array, so that is one
+  edit in the map body instead of eight scattered ones. Its step 1 (alt="" on
+  the navbar logo) and step 2 (the duplicated Hero metric labels) are untouched.
+- Environment was CLEAN for the third loop running: node_modules/.bin populated,
+  lint and build fine on arrival, nothing squatting on port 3000. I killed my
+  preview server with the bracketed `pkill -f 'vite p[r]eview'` form and removed
+  the /tmp/polish002-base worktree.
+- STILL OUTSTANDING FROM EARLIER LOOPS, ALL HUMAN ACTIONS, NONE DONE:
+  SEC-001's Vercel GITHUB_TOKEN env var; REVOKING THE LEAKED GITHUB TOKEN (still
+  live, still in the deployed bundle); SEO-001's post-deploy og-image 200 check
+  plus the LinkedIn/X re-scrape; PERF-003's post-deploy Cache-Control checks;
+  RENDER-002's post-deploy `curl -s https://www.dilshersingh.com |
+  grep -c 'Senior full stack'`.
+- Also still unowned by any PRD item: the sticky header does not stick
+  (diagnosis in the A11Y-003 entry — the root div's overflow-x-hidden), and the
+  heatmap is a solid white rectangle in forced-colors mode (A11Y-005 entry).
+
+SUGGESTED NEXT ITEM
+A11Y-006 (priority 13), for the reason above. Then PERF-004 (14) — note its
+step 1 still names framer-motion as a vendor chunk, but RENDER-001 removed every
+framer-motion import, so that dependency is dead weight in package.json and the
+step needs rewording before it can be satisfied literally.

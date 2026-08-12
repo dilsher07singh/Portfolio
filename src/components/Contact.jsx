@@ -1,6 +1,14 @@
-import { CONTACT } from "../constants";
+import { CONTACT, SOCIALS } from "../constants";
 import Reveal from "./Reveal";
-import { FaLinkedin, FaGithub, FaWhatsapp } from "react-icons/fa";
+
+// This section shows the three channels someone would actually reach out on;
+// the navbar carries the full set. Selecting by id keeps the displayed order
+// and the set itself explicit here, while the hrefs, labels and icons stay
+// defined once in src/constants.
+const CONTACT_SOCIAL_IDS = ["linkedin", "github", "whatsapp"];
+const CONTACT_SOCIALS = CONTACT_SOCIAL_IDS.map((id) =>
+  SOCIALS.find((social) => social.id === id)
+);
 
 // The copyright line that used to close this section now lives in the <footer>
 // in App.jsx, outside <main>, so it is exposed as a contentinfo landmark. The
@@ -62,36 +70,19 @@ const Contact = () => {
           duration={0.6}
           className="mt-8 flex items-center justify-center gap-6 text-2xl"
         >
-          <a
-            href="https://www.linkedin.com/in/dilsher07singh/"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Dilsher Singh on LinkedIn"
-            aria-label="Dilsher Singh on LinkedIn"
-            className="transition-colors hover:text-purple-400"
-          >
-            <FaLinkedin />
-          </a>
-          <a
-            href="https://github.com/dilsher07singh"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Dilsher Singh on GitHub"
-            aria-label="Dilsher Singh on GitHub"
-            className="transition-colors hover:text-purple-400"
-          >
-            <FaGithub />
-          </a>
-          <a
-            href={CONTACT.whatsapp}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Message Dilsher Singh on WhatsApp"
-            aria-label="Message Dilsher Singh on WhatsApp"
-            className="transition-colors hover:text-purple-400"
-          >
-            <FaWhatsapp />
-          </a>
+          {CONTACT_SOCIALS.map(({ id, href, label, Icon }) => (
+            <a
+              key={id}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={label}
+              aria-label={label}
+              className="transition-colors hover:text-purple-400"
+            >
+              <Icon />
+            </a>
+          ))}
         </Reveal>
       </div>
     </section>

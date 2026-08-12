@@ -1,10 +1,6 @@
-import { PROJECTS } from "../constants";
+import { CHIP_CLASS, GITHUB_URL, PROJECTS } from "../constants";
 import Reveal from "./Reveal";
 import { FaArrowRight } from "react-icons/fa";
-
-// Kept identical to the chip in Experience.jsx.
-const CHIP =
-  "rounded border border-purple-900/40 bg-purple-950/40 px-2 py-1 text-sm font-medium text-purple-300";
 
 const Projects = () => {
   return (
@@ -68,7 +64,7 @@ const Projects = () => {
 
                   <div className="mb-4 flex flex-wrap gap-2">
                     {project.technologies.map((tech) => (
-                      <span key={tech} className={CHIP} title={tech}>
+                      <span key={tech} className={CHIP_CLASS} title={tech}>
                         {tech}
                       </span>
                     ))}
@@ -91,7 +87,7 @@ const Projects = () => {
       {/* Link out to the rest */}
       <div className="mt-10 flex justify-center">
         <a
-          href="https://github.com/dilsher07singh"
+          href={GITHUB_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="mb-8 flex items-center text-purple-400 transition-colors hover:text-purple-300"

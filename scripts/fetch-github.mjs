@@ -10,7 +10,10 @@ import { writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const USERNAME = "dilsher07singh";
+// The same constant the components link to. src/constants/site.js is kept
+// dependency-free precisely so this script can import it under plain Node.
+import { GITHUB_USERNAME } from "../src/constants/site.js";
+
 const OUT_PATH = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../public/github-contributions.json"
@@ -18,7 +21,7 @@ const OUT_PATH = resolve(
 
 const QUERY = `
   {
-    user(login: "${USERNAME}") {
+    user(login: "${GITHUB_USERNAME}") {
       contributionsCollection {
         contributionCalendar {
           totalContributions

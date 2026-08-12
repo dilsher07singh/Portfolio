@@ -1,9 +1,5 @@
-import { EXPERIENCES } from "../constants";
+import { CHIP_CLASS, EXPERIENCES } from "../constants";
 import Reveal from "./Reveal";
-
-// Kept identical to the chip in Projects.jsx.
-const CHIP =
-  "rounded border border-purple-900/40 bg-purple-950/40 px-2 py-1 text-sm font-medium text-purple-300";
 
 const Experience = () => {
   return (
@@ -54,7 +50,7 @@ const Experience = () => {
 
               <div className="mb-4 flex flex-wrap gap-2">
                 {experience.technologies.map((tech) => (
-                  <span key={tech} className={CHIP} title={tech}>
+                  <span key={tech} className={CHIP_CLASS} title={tech}>
                     {tech}
                   </span>
                 ))}

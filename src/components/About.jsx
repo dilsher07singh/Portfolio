@@ -22,9 +22,15 @@ const About = () => {
       <div className="flex flex-wrap items-start">
         {/* Bio */}
         <Reveal from="left" distance={60} className="w-full lg:w-3/5 lg:pr-12">
-          {ABOUT_TEXT.split("\n\n").map((paragraph) => (
+          {/*
+            Index keys are safe here: the source is a static string constant,
+            so the list never reorders, grows or shrinks between renders. The
+            previous key was the paragraph's first 24 characters, which would
+            silently collide if two paragraphs ever shared an opening phrase.
+          */}
+          {ABOUT_TEXT.split("\n\n").map((paragraph, index) => (
             <p
-              key={paragraph.slice(0, 24)}
+              key={index}
               className="mb-5 font-light leading-relaxed text-neutral-300"
             >
               {paragraph}

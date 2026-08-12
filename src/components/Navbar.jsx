@@ -1,40 +1,5 @@
-import {
-  FaLinkedin,
-  FaGithub,
-  FaWhatsapp,
-  FaInstagram,
-  FaYoutube,
-} from "react-icons/fa";
 import logo from "../assets/dilsherSinghLogo2.png";
-import { CONTACT, NAV_LINKS } from "../constants";
-
-const SOCIALS = [
-  {
-    href: "https://www.linkedin.com/in/dilsher07singh/",
-    label: "Dilsher Singh on LinkedIn",
-    Icon: FaLinkedin,
-  },
-  {
-    href: "https://github.com/dilsher07singh",
-    label: "Dilsher Singh on GitHub",
-    Icon: FaGithub,
-  },
-  {
-    href: CONTACT.whatsapp,
-    label: "Message Dilsher Singh on WhatsApp",
-    Icon: FaWhatsapp,
-  },
-  {
-    href: "https://www.instagram.com/dilsher.07/",
-    label: "Dilsher Singh on Instagram",
-    Icon: FaInstagram,
-  },
-  {
-    href: "https://www.youtube.com/@dilsher07singh",
-    label: "Dilsher Singh on YouTube",
-    Icon: FaYoutube,
-  },
-];
+import { NAV_LINKS, SOCIALS } from "../constants";
 
 const Navbar = () => {
   return (
@@ -83,9 +48,9 @@ const Navbar = () => {
 
         {/* Social links */}
         <div className="flex items-center justify-center gap-4 text-xl lg:text-2xl">
-          {SOCIALS.map(({ href, label, Icon }) => (
+          {SOCIALS.map(({ id, href, label, Icon }) => (
             <a
-              key={href}
+              key={id}
               href={href}
               target="_blank"
               rel="noopener noreferrer"

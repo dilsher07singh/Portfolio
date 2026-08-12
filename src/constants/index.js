@@ -1,3 +1,11 @@
+import {
+  FaLinkedin,
+  FaGithub,
+  FaWhatsapp,
+  FaInstagram,
+  FaYoutube,
+} from "react-icons/fa";
+import { GITHUB_URL } from "./site";
 import project1 from "../assets/optimized/project-1.webp";
 import project2 from "../assets/optimized/project-2.webp";
 import project3 from "../assets/optimized/project-3.webp";
@@ -5,6 +13,17 @@ import project3 from "../assets/optimized/project-3.webp";
 // so the browser can reserve the right box before the image loads; generated
 // rather than hardcoded so it stays in step with the encode settings.
 import dimensions from "../assets/optimized/dimensions.json";
+
+// Re-exported so components have one import path for constants, while
+// ./site.js stays importable by the Node build scripts.
+export { GITHUB_USERNAME, GITHUB_URL } from "./site";
+
+// The technology chip, shared by Experience.jsx and Projects.jsx. Both files
+// carried a byte-identical copy of this string with a comment asking that they
+// be kept in step; this is that single source. Tailwind scans this file, so the
+// utilities are still emitted.
+export const CHIP_CLASS =
+  "rounded border border-purple-900/40 bg-purple-950/40 px-2 py-1 text-sm font-medium text-purple-300";
 
 export const HERO_CONTENT = `Senior full stack engineer with 5 years building production financial infrastructure in Hong Kong. I built Dualmint's equipment-financing marketplace end to end — the TypeScript/Node.js backend, the Next.js clients, and the settlement layer that routes verified machine revenue to investors. Promoted to senior in 2025; I now lead a team of 5 and own backend and infrastructure.`;
 
@@ -141,9 +160,46 @@ export const CONTACT = {
   whatsapp: "https://wa.me/919740071441",
 };
 
+// Consumed by Navbar.jsx (all five) and Contact.jsx (the subset it names).
+// `Icon` is a component reference, not an element, so this stays a plain .js
+// module. Each entry's label is used for both aria-label and title.
+export const SOCIALS = [
+  {
+    id: "linkedin",
+    href: "https://www.linkedin.com/in/dilsher07singh/",
+    label: "Dilsher Singh on LinkedIn",
+    Icon: FaLinkedin,
+  },
+  {
+    id: "github",
+    href: GITHUB_URL,
+    label: "Dilsher Singh on GitHub",
+    Icon: FaGithub,
+  },
+  {
+    id: "whatsapp",
+    href: CONTACT.whatsapp,
+    label: "Message Dilsher Singh on WhatsApp",
+    Icon: FaWhatsapp,
+  },
+  {
+    id: "instagram",
+    href: "https://www.instagram.com/dilsher.07/",
+    label: "Dilsher Singh on Instagram",
+    Icon: FaInstagram,
+  },
+  {
+    id: "youtube",
+    href: "https://www.youtube.com/@dilsher07singh",
+    label: "Dilsher Singh on YouTube",
+    Icon: FaYoutube,
+  },
+];
+
 export const NAV_LINKS = [
   { label: "About", href: "#about" },
-  { label: "Skills", href: "#technologies" },
+  // Label matches the section heading and the #technologies anchor it targets.
+  { label: "Technologies", href: "#technologies" },
   { label: "Experience", href: "#experience" },
   { label: "Projects", href: "#projects" },
   { label: "Contact", href: "#contact" },

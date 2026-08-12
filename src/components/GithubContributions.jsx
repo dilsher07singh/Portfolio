@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { GITHUB_URL } from "../constants";
 import Reveal from "./Reveal";
 
 const GithubContributions = () => {
@@ -69,7 +70,7 @@ const GithubContributions = () => {
         <p className="mb-8 text-center text-neutral-400">
           GitHub activity is unavailable right now —{" "}
           <a
-            href="https://github.com/dilsher07singh"
+            href={GITHUB_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="text-purple-400 transition-colors hover:text-purple-300"
