@@ -44,6 +44,15 @@ const App = () => {
         <GithubContributions />
         <Contact />
       </main>
+      {/*
+        Outside <main> on purpose: a <footer> only maps to the contentinfo
+        landmark when it is not nested inside main, article, aside, nav or
+        section. It repeats main's container/padding so the copyright keeps
+        the exact box it had while it lived at the end of Contact.jsx.
+      */}
+      <footer className="container mx-auto px-8 pt-16 pb-20 text-center text-sm tracking-tight text-neutral-400">
+        © {new Date().getFullYear()} Dilsher Singh
+      </footer>
     </div>
   );
 };

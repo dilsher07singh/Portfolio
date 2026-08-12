@@ -1637,3 +1637,132 @@ nav mismatch. SEC-001's notes flagged the username duplication and explicitly
 left it to POLISH-002, so that groundwork is already scoped.
 Then A11Y-005 (12) — and read A11Y-004's note first: put the new <footer>
 OUTSIDE <main>, since main is the skip-link target.
+
+--------------------------------------------------------------------------
+2026-08-12 — A11Y-005 (priority 12, accessibility): the heatmap announces one
+             summary instead of 365 silent divs, and there is a real footer
+--------------------------------------------------------------------------
+
+WHY THIS ONE, OUT OF PRIORITY ORDER
+POLISH-002 (priority 11) is numerically ahead of A11Y-005 (priority 12), and I
+took A11Y-005 anyway. POLISH-002 is an internal refactor — dedupe a class
+string, centralize a URL — with essentially no user-facing effect. A11Y-005 is
+a live defect for real people: ~365 unlabeled nodes in the a11y tree conveying
+data only by colour, and a copyright line with no contentinfo landmark. One
+priority notch is not worth putting a refactor ahead of a user-facing a11y fix.
+POLISH-002 is UNTOUCHED and is now the head of the queue.
+
+WHAT WAS DONE
+Three files, no CSS change.
+
+1. src/components/GithubContributions.jsx
+   role="img" + aria-label on the heatmap, and aria-hidden="true" on all 368
+   day cells.
+
+   >>> THE ROLE WENT ON THE SCROLL CONTAINER, NOT THE INNER GRID <<<
+   The markup is an outer `overflow-x-auto pb-2` div wrapping an inner
+   `flex w-max gap-1` grid. A11Y-003 found that the OUTER one is implicitly
+   keyboard-focusable in Chrome so a keyboard user can scroll the heatmap —
+   and it was an unnamed focusable node. Putting the role and label there
+   names that focusable element instead of leaving it silent, and one element
+   does both jobs. I checked this cost nothing: at 375px it is still tab stop
+   21 of 21, still scrollable (scrollLeft 0 -> 200), still takes focus, still
+   paints A11Y-003's ring.
+
+2/3. src/components/Contact.jsx + src/App.jsx
+   The copyright <p> moved out of the contact section into a <footer> placed
+   immediately after </main>. Placement is the whole point: a <footer> nested
+   inside main/section/article/aside/nav is NOT a contentinfo landmark.
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems
+- yarn build -> pass (only the documented fetchPriority SSR warning)
+- step 4: getByRole('contentinfo') -> exactly 1, "© 2026 Dilsher Singh"
+- step 5: Chrome's real a11y tree for #github is now exactly
+    region "GitHub Contributions"
+      heading "GitHub Contributions" [level=2]
+      paragraph "1,582 contributions in the last year"
+      img "GitHub contribution heatmap: 1,582 contributions over the last year"
+  All 368 day cells are GONE from the snapshot. Independent corroboration:
+  axe's `region` rule counted 675 passing nodes for A11Y-004 and counts 307
+  now. The difference is exactly 368.
+- step 6: forced-colors: active -> aria-label and the whole aria snapshot are
+  unchanged, so the summary still gets through
+- full axe scan: 0 violations, 43 rules / 991 nodes passing, 6 incomplete (all
+  color-contrast on the radial gradient), with document.body's inline style
+  attribute NULL — no POLISH-001-era workaround needed any more
+- 0 hydration errors, 7 named regions, 30 reveals / 0 stranded, 20 tab stops at
+  1280 and 21 at 375 all ringed, 0 horizontal overflow at 1280 and 375
+
+>>> GOTCHA: [role="img"] MATCHES 13 ELEMENTS, NOT 1 <<<
+react-icons emits role="img" on every <svg>. The other 12 are Technologies
+icons, all inside an aria-hidden ancestor, so they are pruned from the a11y
+tree and are not a problem — but a bare
+`document.querySelectorAll('[role="img"]')` looks like a failure. Scope to
+`#github [role="img"]`. I lost a measurement to this.
+
+>>> DEV SERVER REPORTS HYDRATION ERRORS. THEY ARE NOT REAL. <<<
+`yarn dev` serves the raw index.html shell with an EMPTY <div id="root">, and
+main.jsx calls hydrateRoot, so Chrome logs "Expected server HTML to contain a
+matching <div>" and "the entire root will switch to client rendering" on EVERY
+load — before my change too. This is pre-existing and is exactly why RENDER-002
+and every loop since verified on `vite preview`. On the built preview: 0
+hydration errors. Do not chase these on the dev server.
+
+>>> THE FOOTER MOVE IS SPACING-NEUTRAL, AND I MEASURED IT RATHER THAN HOPING <<<
+Contact's section lost its bottom padding and the line lost its top margin;
+both moved onto the footer as its own padding, and the footer repeats main's
+`container mx-auto px-8` so the text keeps the identical 704px content box.
+Built HEAD (6c16f92) in a git worktree on :3001 and diffed against :3000:
+  document height   5435px before, 5435px after
+  copyright text baseline   identical y in both
+  pixel diff of the final viewport (1280x800, after a full scroll pass):
+  669 of 1,024,000 pixels differ, ALL inside the copyright's own 126x14 box.
+THE ONE HONEST CAVEAT ON "NO VISUAL CHANGE": `tracking-tight` is -0.025em. It
+used to be inherited from a 16px parent (-0.4px); it now computes on the
+footer's own 14px font-size (-0.35px). The string is 1.02px wider and sits
+0.5px further left. I did not chase that last pixel with an arbitrary tracking
+value — a magic number is worse than a sub-pixel.
+
+>>> WHAT I DELIBERATELY DID NOT FIX, AND THE MEASUREMENT BEHIND IT <<<
+In forced-colors mode all 368 cells render as ONE computed backgroundColor,
+rgb(255,255,255), even though 5 distinct colours are still on the inline
+styles. The heatmap is a solid white rectangle there — arguably worse than
+useless, since it reads as "maximum contributions every single day".
+The remedy is `forced-color-adjust: none` on the cells, which is the standard
+advice when colour IS the data. I did not add it: it overrides a user's
+explicit high-contrast preference, and this item's steps ask only that the
+SUMMARY survive forced-colors, which it does. The same is true of the
+colourblind half of the description — the steps' only remedy for it is also the
+aria-label. Worth a new PRD item if the user wants the grid itself readable
+there; it is a design decision, not a code one.
+
+NOTES FOR WHOEVER IS NEXT
+- The day cells keep their `title` attribute. It is now inert for screen
+  readers (aria-hidden) but is still the mouse tooltip, and it does NOT
+  duplicate visible text, so it is out of A11Y-006's scope. Leave it.
+- The heatmap's role="img" is correctly ABSENT from dist/index.html —
+  GithubContributions still SSRs its loading state. If anyone ever prerenders
+  the ready state, re-check the static HTML.
+- Incidental: `.mt-16` is now emitted 0 times in the built CSS; that was its
+  last use. I kept Tailwind utility names OUT of the new code comments for the
+  reason PERF-003 documented (Tailwind scans comments and emits dead CSS for
+  any utility named in prose) and there is a warning to that effect in
+  Contact.jsx.
+- Environment was CLEAN: node_modules/.bin populated, nothing squatting on port
+  3000, lint and build worked on arrival. Second clean loop in a row.
+- STILL OUTSTANDING FROM EARLIER LOOPS, ALL HUMAN ACTIONS, NONE DONE:
+  SEC-001's Vercel GITHUB_TOKEN env var; REVOKING THE LEAKED GITHUB TOKEN (it
+  is still live and still in the deployed bundle); SEO-001's post-deploy
+  og-image 200 check plus the LinkedIn/X re-scrape; PERF-003's post-deploy
+  Cache-Control checks; RENDER-002's post-deploy
+  `curl -s https://www.dilshersingh.com | grep -c 'Senior full stack'`.
+
+SUGGESTED NEXT ITEM
+POLISH-002 (priority 11) is now the highest-priority open item and is
+straightforward: dedupe the CHIP class string, share the SOCIALS array with
+Contact.jsx, centralize the GitHub URL/username, fix the "Skills" nav label vs
+"Technologies" heading mismatch, and swap About.jsx's content-derived React
+key. Note its step 2 says to preserve each social link's aria-label AND title —
+A11Y-006 (priority 13) then wants aria-hidden on those same icons, so doing
+POLISH-002 first and A11Y-006 second keeps both clean.

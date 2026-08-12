@@ -86,7 +86,20 @@ const GithubContributions = () => {
             {totalContributions.toLocaleString()} contributions in the last year
           </p>
 
-          <div className="overflow-x-auto pb-2">
+          {/*
+            The grid conveys its data purely through ~365 background colours,
+            which is meaningless to a screen reader and unreadable in
+            forced-colors mode. role="img" collapses the whole subtree into a
+            single node named by aria-label, so the summary is announced once
+            instead of 365 unlabeled divs. It sits on the scroll container
+            rather than the inner grid so the element Chrome makes implicitly
+            focusable (for keyboard scrolling) is the one carrying the name.
+          */}
+          <div
+            role="img"
+            aria-label={`GitHub contribution heatmap: ${totalContributions.toLocaleString()} contributions over the last year`}
+            className="overflow-x-auto pb-2"
+          >
             <div className="mx-auto flex w-max gap-1">
               {weeks.map((week) => (
                 <div
@@ -94,8 +107,12 @@ const GithubContributions = () => {
                   className="flex flex-col gap-1"
                 >
                   {week.contributionDays.map((day) => (
+                    // aria-hidden is belt-and-braces: role="img" above already
+                    // prunes these, but it keeps the cells inert if that role
+                    // is ever moved or dropped.
                     <div
                       key={day.date}
+                      aria-hidden="true"
                       className="h-3 w-3 rounded-sm"
                       style={{ backgroundColor: day.color }}
                       title={`${day.contributionCount} contributions on ${day.date}`}

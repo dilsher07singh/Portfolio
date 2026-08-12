@@ -2,12 +2,20 @@ import { CONTACT } from "../constants";
 import Reveal from "./Reveal";
 import { FaLinkedin, FaGithub, FaWhatsapp } from "react-icons/fa";
 
+// The copyright line that used to close this section now lives in the <footer>
+// in App.jsx, outside <main>, so it is exposed as a contentinfo landmark. The
+// vertical space it occupied moved with it: this section's former bottom
+// padding and the line's own top margin are now the footer's own padding, so
+// the rendered page height is unchanged.
+//
+// NOTE: do not name Tailwind utilities in prose here. Tailwind scans this file
+// for class names and would emit dead CSS for any it finds (see PERF-003).
 const Contact = () => {
   return (
     <section
       id="contact"
       aria-labelledby="contact-heading"
-      className="scroll-mt-24 pb-20"
+      className="scroll-mt-24"
     >
       <Reveal
         as="h2"
@@ -85,10 +93,6 @@ const Contact = () => {
             <FaWhatsapp />
           </a>
         </Reveal>
-
-        <p className="mt-16 text-sm text-neutral-400">
-          © {new Date().getFullYear()} Dilsher Singh
-        </p>
       </div>
     </section>
   );
