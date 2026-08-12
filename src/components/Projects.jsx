@@ -17,53 +17,68 @@ const Projects = () => {
       </Reveal>
 
       <div className="space-y-8">
-        {PROJECTS.map((project) => (
-          <a
-            href={project.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            key={project.title}
-            className="block"
-            aria-label={`View details about the project ${project.title}`}
-          >
-            <div className="flex flex-wrap rounded-xl border border-neutral-800 bg-neutral-900/40 p-6 transition-colors duration-300 hover:border-purple-600/60 lg:justify-center">
-              {/* Screenshot */}
-              <Reveal from="left" className="w-full lg:w-1/4">
-                <img
-                  src={project.image}
-                  loading="lazy"
-                  alt={`Screenshot of the project ${project.title}`}
-                  className="mb-6 w-full max-w-[200px] rounded-lg object-cover"
-                />
-              </Reveal>
+        {PROJECTS.map((project, index) => {
+          // The link wraps the whole card, so its accessible name is what a
+          // screen reader announces for it. Name it from the heading plus the
+          // new-tab hint rather than an aria-label: aria-label would replace
+          // the card's own text, and the previous one also claimed to open a
+          // details page when the href is the live external site.
+          const titleId = `project-title-${index}`;
+          const newTabId = `project-new-tab-${index}`;
 
-              {/* Detail */}
-              <Reveal
-                from="right"
-                duration={1}
-                className="w-full max-w-xl lg:w-3/4"
-              >
-                <h3 className="mb-2 text-xl font-semibold">{project.title}</h3>
-                <p className="mb-4 leading-relaxed text-neutral-300">
-                  {project.description}
-                </p>
+          return (
+            <a
+              href={project.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              key={project.title}
+              className="block"
+              aria-labelledby={`${titleId} ${newTabId}`}
+            >
+              <div className="flex flex-wrap rounded-xl border border-neutral-800 bg-neutral-900/40 p-6 transition-colors duration-300 hover:border-purple-600/60 lg:justify-center">
+                {/* Screenshot */}
+                <Reveal from="left" className="w-full lg:w-1/4">
+                  <img
+                    src={project.image}
+                    loading="lazy"
+                    alt={`Screenshot of the project ${project.title}`}
+                    className="mb-6 w-full max-w-[200px] rounded-lg object-cover"
+                  />
+                </Reveal>
 
-                <div className="mb-4 flex flex-wrap gap-2">
-                  {project.technologies.map((tech) => (
-                    <span key={tech} className={CHIP} title={tech}>
-                      {tech}
+                {/* Detail */}
+                <Reveal
+                  from="right"
+                  duration={1}
+                  className="w-full max-w-xl lg:w-3/4"
+                >
+                  <h3 id={titleId} className="mb-2 text-xl font-semibold">
+                    {project.title}
+                  </h3>
+                  <p className="mb-4 leading-relaxed text-neutral-300">
+                    {project.description}
+                  </p>
+
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    {project.technologies.map((tech) => (
+                      <span key={tech} className={CHIP} title={tech}>
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 flex items-center text-purple-400 transition-colors hover:text-purple-300">
+                    <span className="mr-2 font-semibold">View Project</span>
+                    <span id={newTabId} className="sr-only">
+                      (opens in a new tab)
                     </span>
-                  ))}
-                </div>
-
-                <div className="mt-4 flex items-center text-purple-400 transition-colors hover:text-purple-300">
-                  <span className="mr-2 font-semibold">View Project</span>
-                  <FaArrowRight aria-hidden="true" />
-                </div>
-              </Reveal>
-            </div>
-          </a>
-        ))}
+                    <FaArrowRight aria-hidden="true" />
+                  </div>
+                </Reveal>
+              </div>
+            </a>
+          );
+        })}
       </div>
 
       {/* Link out to the rest */}

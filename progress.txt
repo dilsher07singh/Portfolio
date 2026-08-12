@@ -344,3 +344,96 @@ A11Y-001 (priority 3) is the last priority-3 item and is a one-line fix, but it
 is browserTest:true — resolve the Playwright situation above first. Otherwise
 PERF-002 (priority 4) now that the image payload is no longer the bottleneck, or
 RENDER-002 (priority 5), still unblocked and pre-validated by RENDER-001.
+
+--------------------------------------------------------------------------
+2026-08-12 — A11Y-001 (priority 3, accessibility): project card links are
+             named from their heading instead of a wrong aria-label
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+Last remaining priority-3 item, and the highest-priority item still open.
+It was deferred by the previous loop only because it is browserTest:true and
+Playwright was reported dead in the sandbox. IT IS NOT DEAD ANY MORE — see the
+Playwright note below, which is the single most useful thing in this entry for
+whoever picks up the next browserTest item (A11Y-002 and A11Y-003 are both
+browserTest:true and both now unblocked).
+
+>>> PLAYWRIGHT WORKS NOW. ALSO: PORT 3000 HAD A STALE SERVER ON IT <<<
+The MCP browser launched fine with no install step. The previous loop's
+"Host system is missing dependencies" is no longer the state of the world.
+Separately, and more dangerous: a `vite preview --port 3000` from an earlier
+loop (PID 998) was STILL RUNNING and serving the OLD dist/. Verifying an edit
+against it would have silently shown pre-edit markup and produced a false pass.
+I killed it and ran `vite --port 3000` (dev server) so the page reflects source
+directly. CHECK `ps aux | grep vite` BEFORE YOU TRUST localhost:3000.
+
+WHAT WAS DONE
+Each of the 3 project cards is an <a> wrapping the whole card. It carried
+aria-label="View details about the project {title}", which both replaced the
+card's own text as the announced name and lied about the destination (the href
+is the live external site, not a details page).
+
+PRD step 1 offered two options. I took aria-labelledby, NOT plain removal:
+removing the label entirely makes the computed name the whole concatenated
+subtree — "Screenshot of the project X  X  <150-word description>  TypeScript
+Node.js ...  View Project". That satisfies the letter of the step but is a
+worse announcement than what we started with.
+
+- <h3> gained id={`project-title-${index}`}.
+- A new sr-only <span id={`project-new-tab-${index}`}>(opens in a new tab)</span>
+  sits next to the visible "View Project" CTA.
+- The <a> is now aria-labelledby={`${titleId} ${newTabId}`}.
+
+The new-tab hint is a SEPARATE span rather than being nested inside the h3 on
+purpose: nesting it would drag "(opens in a new tab)" into the heading's own
+accessible name and pollute the heading rotor. Keep them separate if you touch this.
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems
+- yarn build -> pass
+- Chrome's REAL a11y tree (not my own accname math) reports the 3 link names as
+  "Dualmint Marketplace (opens in a new tab)", "Ipseity Network (opens in a new
+  tab)", "Real-Time Collaborative Editor (opens in a new tab)". Playwright's
+  getByRole resolution independently reported the same 3 names.
+- description paragraphs + all 15 chips still present as distinct a11y nodes
+  under each link, none inside an aria-hidden subtree
+- 0 duplicate ids, 0 dangling idrefs on the page
+- target="_blank" + rel="noopener noreferrer" intact on all 3 cards
+- sr-only span computes to position:absolute / 1x1 / clip rect(0,0,0,0) on all 3
+- no visual change: CTA row screenshots identical; no horizontal overflow at
+  780px or 375px; hover still paints the border rgba(147,51,234,0.6); link
+  still focusable and focus lands on it
+- old label string: 0 hits in src/ AND 0 hits in the built bundle
+- only console error is the pre-existing fonts.googleapis.com cert failure
+  (sandbox firewall, present before my change too, and PERF-003 moves that
+  request to index.html anyway)
+
+>>> I AM CORRECTING THIS ITEM'S PREMISE — READ IF YOU OWN A11Y-005/006 <<<
+The PRD said screen reader users "lose the h3, the description paragraph, and
+every technology chip". I captured a BEFORE snapshot and that is overstated:
+Chrome still exposed the h3, the paragraph and the chips as descendants of the
+link even WITH the aria-label present. What was actually broken is the announced
+accessible NAME — wrong text, and for many screen readers the only thing read
+when the link is focused or listed in the links rotor. The fix is still right;
+the severity framing was sharper than the a11y tree justified. Worth calibrating
+against before you take the remaining a11y items at face value.
+
+NOTES FOR WHOEVER IS NEXT
+- I did NOT remove title={tech} from the chips, and did NOT touch the project
+  image alt text. Both are A11Y-006's steps. The img alt ("Screenshot of the
+  project X") is now redundant noise inside a link that no longer needs it for
+  its name — if A11Y-006 wants to make those images decorative, this is the
+  moment, and it is safe now that the name comes from the h3.
+- The ids are index-based (project-title-0..2). A11Y-004 will add h2 ids for
+  section landmarks — pick a distinct prefix so the two schemes do not collide.
+- Still outstanding from earlier loops, STILL NOT DONE: SEC-001's Vercel
+  GITHUB_TOKEN env var and revoking the leaked token (that token is still live),
+  and SEO-001's post-deploy og-image 200 check plus the LinkedIn/X re-scrape.
+
+SUGGESTED NEXT ITEM
+A11Y-002 and PERF-002 are tied at priority 4. PERF-002 is the bigger user-facing
+win (Hero still holds the LCP avatar at opacity 0 for 1.2s, which caps the
+Lighthouse score on its own) and its step 3 — width/height on the Projects.jsx
+and Navbar.jsx images — is still undone. A11Y-002 is a mechanical
+text-neutral-500 -> 400 sweep with a clear grep assertion. Both are
+browserTest:true and Playwright is confirmed working now.
