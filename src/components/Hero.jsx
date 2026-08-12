@@ -1,5 +1,5 @@
 import { HERO_CONTENT, METRICS } from "../constants";
-import profilePic from "../assets/dilsherSinghProfile.png";
+import profilePic from "../assets/optimized/dilsherSinghProfile.webp";
 import Reveal from "./Reveal";
 
 const Hero = () => {

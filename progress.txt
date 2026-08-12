@@ -239,3 +239,108 @@ Projects.jsx — but it is browserTest:true, so budget for a Playwright pass.
 PERF-001 (priority 3) is the biggest win available: ~4.5MB of images ship to
 render three 200px thumbnails, and dist/assets is 4.5MB right now (project-1.jpg
 alone is 2.2MB). RENDER-002 (priority 5) is still unblocked and pre-validated.
+
+--------------------------------------------------------------------------
+2026-08-12 — PERF-001 (priority 3, performance): image payload cut from
+             4.5MB to 288KB via a reproducible WebP pipeline
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+A11Y-001 and PERF-001 are both priority 3. PERF-001 is by far the larger live
+defect — dist/assets was 4.5MB, of which 4.4MB was four images rendering three
+200px thumbnails and one 384px avatar. A11Y-001 is a one-line aria-label
+removal and stays clean as its own item. One item per loop, so A11Y-001 is
+UNTOUCHED and still open.
+
+WHAT WAS DONE
+Confirmed the defect first. Read the magic bytes rather than trusting names:
+  project-1.jpg -> actually PNG, 1900x1318, 2149KB
+  project-2.png -> PNG, 2553x1308, 901KB
+  project-3.jpg -> actually PNG, 2245x1324, 167KB
+  dilsherSinghProfile.png -> PNG, 1024x1024, 1182KB
+
+New layout:
+- src/assets/originals/  full-res sources, extensions now matching the real
+  encoding (project-1.png, project-3.png). NOTHING imports this directory, so
+  Vite never bundles it — it is pipeline input only. src/assets/projects/ is gone.
+- src/assets/optimized/  generated .webp, COMMITTED on purpose (see below).
+- src/assets/dilsherSinghProfile.jpg deleted — 174KB, imported by nothing.
+
+- scripts/optimize-images.mjs (new): sharp, resize to ~2x display size, encode
+  WebP. Profile 768x768 @ q78 -> 57.8KB. Projects 400px wide @ q76 -> 9.9 / 5.7
+  / 4.2KB. Four images total 78KB, down from 4.4MB.
+- package.json: build is now
+    node scripts/optimize-images.mjs && node --env-file-if-exists=.env scripts/fetch-github.mjs && vite build
+  plus a standalone `yarn optimize:images`. sharp added as a devDependency.
+- Imports updated in src/components/Hero.jsx and src/constants/index.js.
+
+THREE DESIGN CALLS WORTH KNOWING
+1. Generated WebP is committed, not gitignored. That means a build still
+   succeeds on a host where sharp's platform binary is unusable, and it makes
+   the shipped payload of any commit reviewable without running the pipeline.
+   The script degrades exactly like fetch-github.mjs already does: outputs
+   present -> warn and exit 0; an output genuinely missing -> clear error and
+   exit 1 (better than letting Vite fail on an unresolved import). BOTH paths
+   were actually exercised by hiding node_modules/sharp, not just reasoned about.
+2. Skip logic is a sha256 of the source bytes PLUS the encode settings, stored
+   in src/assets/optimized/.manifest.json. Deliberately not mtime-based: git
+   does not preserve mtimes, so a fresh clone would re-encode at random. Change
+   an original or a target width and it re-encodes; otherwise it is a no-op.
+3. Originals were kept, not deleted. The pipeline needs an input to be
+   reproducible, and those bytes are already in git history, so deleting them
+   would not shrink a clone anyway.
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems
+- yarn build -> pass
+- du -sk dist/assets                        -> 288  (target <500, was 4608)
+- find dist/assets ... -size +150k | wc -l  -> 0
+- re-run of the script                      -> "4 images already up to date"
+- sharp-missing degradation                 -> both branches behave as designed
+
+>>> HOW THE IMAGE-404 STEP WAS VERIFIED — READ IF YOU NEED A BROWSER <<<
+PERF-001 is browserTest:false so code inspection was sufficient, but two of its
+steps ask for a browser. PLAYWRIGHT CANNOT RUN IN THIS SANDBOX: the MCP browser
+fails with "Host system is missing dependencies to run browsers".
+`sudo npx playwright install-deps` was still running after ~15 minutes with no
+output and was NOT confirmed to finish — budget real time for this, or expect it
+to be blocked by the firewall. If you pick up a browserTest:true item next
+(A11Y-001 is the cheapest), sort this out FIRST.
+Verified without a browser instead, which is arguably more direct:
+- extracted every /assets/*.{webp,png,jpg,svg} referenced by dist/assets/*.js
+  and curled each against `vite preview --port 3000`: all 4 -> 200 image/webp.
+- the only other image, the 1.9KB navbar logo, is under Vite's 4KB inline limit
+  and ships as a base64 data URI, so it cannot 404. It is not in dist/assets.
+- visual quality: composited each optimized file side by side against its
+  original downscaled to TRUE display size (384px / 200px) and looked at them —
+  indistinguishable. PSNR at display size 36.6dB profile, 32.0dB and 38.0dB for
+  the project screenshots.
+
+NOTES FOR WHOEVER IS NEXT
+- `yarn` WAS NOT INSTALLED in this workspace. Worse, npm v9 silently rewrites
+  yarn.lock when it sees one (it rewrote 453/542 lines, swapping
+  registry.yarnpkg.com for registry.npmjs.org, just from `npm install sharp`).
+  I reverted that and did `sudo npm i -g yarn@1.22.22`, then `yarn add -D sharp`,
+  so the lockfile diff is scoped to +234 lines of real sharp entries.
+  DO NOT run bare `npm install` in this repo unless you intend to trash yarn.lock.
+- The yarn.lock records all sharp platform variants including linux-x64, so
+  Vercel resolves fine; the local install only linked linux-arm64.
+- fetch-github.mjs logs "Request failed: fetch failed" here because the sandbox
+  firewall blocks api.github.com. That is the designed fallback, not a
+  regression — it keeps the committed JSON and exits 0.
+- PERF-002 (priority 4) is the natural follow-on and is now the LCP bottleneck
+  on its own: Hero still holds the avatar at opacity 0 for 1.2s. PERF-002 also
+  owns adding width/height to the Projects.jsx and Navbar.jsx images — I did NOT
+  add those. The Hero avatar already has width/height 384 and they are still
+  correct against the 768px 2x source.
+- Do not point any image item at public/og-image.jpg. public/ is copied verbatim
+  and is not touched by this pipeline, which is what SEO-001 wanted.
+- Still outstanding from earlier loops, none of them done: SEC-001's Vercel
+  GITHUB_TOKEN env var and revoking the leaked token (STILL LIVE), and SEO-001's
+  post-deploy og-image 200 check plus LinkedIn/X cache re-scrape.
+
+SUGGESTED NEXT ITEM
+A11Y-001 (priority 3) is the last priority-3 item and is a one-line fix, but it
+is browserTest:true — resolve the Playwright situation above first. Otherwise
+PERF-002 (priority 4) now that the image payload is no longer the bottleneck, or
+RENDER-002 (priority 5), still unblocked and pre-validated by RENDER-001.

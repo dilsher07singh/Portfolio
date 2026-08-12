@@ -1,6 +1,6 @@
-import project1 from "../assets/projects/project-1.jpg";
-import project2 from "../assets/projects/project-2.png";
-import project3 from "../assets/projects/project-3.jpg";
+import project1 from "../assets/optimized/project-1.webp";
+import project2 from "../assets/optimized/project-2.webp";
+import project3 from "../assets/optimized/project-3.webp";
 
 export const HERO_CONTENT = `Senior full stack engineer with 5 years building production financial infrastructure in Hong Kong. I built Dualmint's equipment-financing marketplace end to end — the TypeScript/Node.js backend, the Next.js clients, and the settlement layer that routes verified machine revenue to investors. Promoted to senior in 2025; I now lead a team of 5 and own backend and infrastructure.`;
 
