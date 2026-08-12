@@ -18,6 +18,11 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SRC_DIR = resolve(ROOT, "src/assets/originals");
 const OUT_DIR = resolve(ROOT, "src/assets/optimized");
 const MANIFEST = resolve(OUT_DIR, ".manifest.json");
+// Encoded dimensions, emitted for the components to use as width/height
+// attributes. Generated rather than hand-copied so changing a target width here
+// can never silently leave a stale aspect ratio in the markup causing layout
+// shift. Imported by src/constants/index.js.
+const DIMENSIONS = resolve(OUT_DIR, "dimensions.json");
 
 // width is ~2x the largest size the image is ever displayed at, so the file is
 // crisp on retina without paying for the 1900-2553px source widths.
@@ -49,6 +54,19 @@ const fileExists = async (path) => {
   }
 };
 
+// Projected out of the manifest so there is exactly one place the dimensions
+// come from, and written on every run (including the fully-cached one) so the
+// file is restored if it is ever deleted.
+const writeDimensions = async (planned, manifest) => {
+  const dimensions = {};
+  for (const { name } of planned) {
+    const entry = manifest[name];
+    if (!entry?.width || !entry?.height) return;
+    dimensions[name] = { width: entry.width, height: entry.height };
+  }
+  await writeFile(DIMENSIONS, JSON.stringify(dimensions, null, 2) + "\n");
+};
+
 const main = async () => {
   await mkdir(OUT_DIR, { recursive: true });
   const manifest = await readManifest();
@@ -66,7 +84,7 @@ const main = async () => {
       .digest("hex");
 
     const upToDate =
-      manifest[name] === key && (await fileExists(resolve(OUT_DIR, name)));
+      manifest[name]?.key === key && (await fileExists(resolve(OUT_DIR, name)));
     planned.push({ ...target, name, bytes, key, upToDate });
   }
 
@@ -75,6 +93,7 @@ const main = async () => {
     console.log(
       `[optimize-images] ${planned.length} images already up to date, skipping.`
     );
+    await writeDimensions(planned, manifest);
     return;
   }
 
@@ -113,7 +132,11 @@ const main = async () => {
       .webp({ quality: item.quality, effort: 6 })
       .toFile(out);
 
-    manifest[item.name] = item.key;
+    manifest[item.name] = {
+      key: item.key,
+      width: info.width,
+      height: info.height,
+    };
     console.log(
       `[optimize-images] ${item.input} -> ${item.name} ` +
         `(${info.width}x${info.height}, ${(info.size / 1024).toFixed(1)}KB)`
@@ -121,6 +144,7 @@ const main = async () => {
   }
 
   await writeFile(MANIFEST, JSON.stringify(manifest, null, 2) + "\n");
+  await writeDimensions(planned, manifest);
 };
 
 await main();

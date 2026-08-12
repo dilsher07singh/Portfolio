@@ -40,6 +40,8 @@ const Projects = () => {
                 <Reveal from="left" className="w-full lg:w-1/4">
                   <img
                     src={project.image}
+                    width={project.imageSize.width}
+                    height={project.imageSize.height}
                     loading="lazy"
                     alt={`Screenshot of the project ${project.title}`}
                     className="mb-6 w-full max-w-[200px] rounded-lg object-cover"

@@ -49,7 +49,13 @@ const Navbar = () => {
           className="flex flex-shrink-0 items-center"
           aria-label="Dilsher Singh — back to top"
         >
-          <img className="w-28" src={logo} alt="Dilsher Singh" />
+          <img
+            className="w-28"
+            src={logo}
+            width={562}
+            height={106}
+            alt="Dilsher Singh"
+          />
         </a>
 
         {/* Section anchors */}

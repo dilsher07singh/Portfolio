@@ -1,6 +1,10 @@
 import project1 from "../assets/optimized/project-1.webp";
 import project2 from "../assets/optimized/project-2.webp";
 import project3 from "../assets/optimized/project-3.webp";
+// Emitted by scripts/optimize-images.mjs. Used for the width/height attributes
+// so the browser can reserve the right box before the image loads; generated
+// rather than hardcoded so it stays in step with the encode settings.
+import dimensions from "../assets/optimized/dimensions.json";
 
 export const HERO_CONTENT = `Senior full stack engineer with 5 years building production financial infrastructure in Hong Kong. I built Dualmint's equipment-financing marketplace end to end — the TypeScript/Node.js backend, the Next.js clients, and the settlement layer that routes verified machine revenue to investors. Promoted to senior in 2025; I now lead a team of 5 and own backend and infrastructure.`;
 
@@ -92,6 +96,7 @@ export const PROJECTS = [
   {
     title: "Dualmint Marketplace",
     image: project1,
+    imageSize: dimensions["project-1.webp"],
     description:
       "An equipment-financing marketplace connecting investors to revenue-generating physical machines. I built the TypeScript/Express backend, the Next.js client and the settlement layer that routes verified machine revenue to investors — including the Solidity contracts audited 9.1/10 by Hacken.",
     technologies: [
@@ -107,6 +112,7 @@ export const PROJECTS = [
   {
     title: "Ipseity Network",
     image: project3,
+    imageSize: dimensions["project-3.webp"],
     description:
       "A decentralized platform where individuals keep full ownership of their personal data and share it with companies on their own terms, backed by homomorphic encryption so analysis never requires decryption. Built the web and React Native clients and the REST APIs behind them.",
     technologies: ["React", "React Native", "JavaScript", "REST APIs"],
@@ -115,6 +121,7 @@ export const PROJECTS = [
   {
     title: "Real-Time Collaborative Editor",
     image: project2,
+    imageSize: dimensions["project-2.webp"],
     description:
       "A Notion-style collaborative document editor with live multi-user presence, AI-assisted document translation and summarization, and edge-deployed serverless functions.",
     technologies: [

@@ -2,6 +2,10 @@ import { HERO_CONTENT, METRICS } from "../constants";
 import profilePic from "../assets/optimized/dilsherSinghProfile.webp";
 import Reveal from "./Reveal";
 
+// Entry animation length for the above-the-fold hero text. See the note beside
+// the elements below: on this page it is paid directly in LCP.
+const HERO_DURATION = 0.3;
+
 const Hero = () => {
   return (
     <section
@@ -12,9 +16,20 @@ const Hero = () => {
         {/* Content Section */}
         <div className="w-full lg:w-1/2">
           <div className="flex flex-col items-center lg:items-start">
+            {/*
+              These four are above the fold, and on narrow viewports — where the
+              avatar drops below it — the h1 and the bio are the LCP candidates.
+              Chrome does not record an opacity-transitioning element as painted
+              until the transition finishes, so every element's delay AND
+              duration are added straight onto LCP. Both are therefore kept
+              short and staggered tightly: the whole hero settles in 0.45s,
+              where it previously took 1.7s. Anything below the fold keeps the
+              default 0.5s, since it has scrolled into view long after LCP.
+            */}
             <Reveal
               as="h1"
               from="left"
+              duration={HERO_DURATION}
               className="pb-4 text-6xl font-thin tracking-tight lg:mt-16 lg:text-8xl"
             >
               Dilsher Singh
@@ -23,7 +38,8 @@ const Hero = () => {
             <Reveal
               as="span"
               from="left"
-              delay={0.5}
+              duration={HERO_DURATION}
+              delay={0.05}
               className="text-3xl tracking-tight text-transparent bg-gradient-to-r from-pink-300 via-slate-500 to-purple-500 bg-clip-text"
             >
               Senior Full Stack Engineer
@@ -32,7 +48,8 @@ const Hero = () => {
             <Reveal
               as="p"
               from="left"
-              delay={0.75}
+              duration={HERO_DURATION}
+              delay={0.1}
               className="mt-3 text-sm tracking-tight text-neutral-400"
             >
               Hong Kong · BEng Computer Engineering, HKUST
@@ -41,7 +58,8 @@ const Hero = () => {
             <Reveal
               as="p"
               from="left"
-              delay={1}
+              duration={HERO_DURATION}
+              delay={0.15}
               className="max-w-xl py-6 my-2 font-light leading-relaxed tracking-tight"
             >
               {HERO_CONTENT}
@@ -51,21 +69,24 @@ const Hero = () => {
 
         {/* Profile Picture Section */}
         <div className="w-full lg:w-1/2 lg:p-8">
-          <Reveal
-            from="right"
-            duration={1}
-            delay={1.2}
-            className="flex justify-center"
-          >
+          {/*
+            Deliberately NOT wrapped in a Reveal. This is the LCP element, and
+            an entry animation holds it at opacity 0 — which browsers do not
+            count as painted — until React has hydrated and the observer has
+            fired. Rendering it plainly makes the largest paint happen on the
+            very first frame, independent of when (or whether) JavaScript runs.
+          */}
+          <div className="flex justify-center">
             <img
               className="max-w-xs rounded-2xl lg:max-w-sm"
               src={profilePic}
               width={384}
               height={384}
               loading="eager"
+              fetchPriority="high"
               alt="Dilsher Singh, Senior Full Stack Engineer"
             />
-          </Reveal>
+          </div>
         </div>
       </div>
 
