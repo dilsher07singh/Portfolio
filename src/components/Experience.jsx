@@ -1,81 +1,78 @@
 import { EXPERIENCES } from "../constants";
 import { motion } from "framer-motion";
 
+// Kept identical to the chip in Projects.jsx.
+const CHIP =
+  "rounded border border-purple-900/40 bg-purple-950/40 px-2 py-1 text-sm font-medium text-purple-300";
+
 const Experience = () => {
   return (
-    <div className="border-b border-neutral-900 pb-4">
-      {/* SEO Optimized Heading */}
-      <motion.h1
+    <section
+      id="experience"
+      className="scroll-mt-24 border-b border-neutral-900 pb-4"
+    >
+      <motion.h2
         whileInView={{ opacity: 1, y: 0 }}
-        initial={{ opacity: 0, y: -100 }}
+        initial={{ opacity: 0, y: -40 }}
+        viewport={{ once: true }}
         transition={{ duration: 0.5 }}
         className="my-20 text-center text-4xl"
       >
         Experience
-      </motion.h1>
+      </motion.h2>
 
-      {/* Mapping through experience items */}
       <div>
-        {EXPERIENCES.map((experience, index) => (
+        {EXPERIENCES.map((experience) => (
           <article
-            key={index}
-            className="mb-8 flex flex-wrap lg:justify-center"
+            key={`${experience.company}-${experience.year}`}
+            className="mb-12 flex flex-wrap lg:justify-center"
           >
-            {/* Year Section */}
+            {/* Dates */}
             <motion.div
               whileInView={{ opacity: 1, x: 0 }}
               initial={{ opacity: 0, x: -100 }}
+              viewport={{ once: true }}
               transition={{ duration: 1 }}
               className="w-full lg:w-1/4"
             >
-              <p className="mb-2 text-sm text-neutral-400">{experience.year}</p>
+              <p className="mb-3 text-sm text-neutral-500">{experience.year}</p>
             </motion.div>
 
-            {/* Role and Description Section */}
+            {/* Role, achievements and stack */}
             <motion.div
               whileInView={{ opacity: 1, x: 0 }}
               initial={{ opacity: 0, x: 100 }}
+              viewport={{ once: true }}
               transition={{ duration: 1 }}
               className="w-full max-w-xl lg:w-3/4"
             >
-              {/* SEO Optimized Role and Company */}
-              <h2 className="mb-2 font-semibold">
+              <h3 className="mb-2 font-semibold">
                 {experience.role} -{" "}
-                <span
-                  className="text-sm text-purple-100"
-                  aria-label={`Company: ${experience.company}`}
-                >
+                <span className="text-sm text-purple-100">
                   {experience.company}
                 </span>
-              </h2>
+              </h3>
 
-              {/* Description of the experience */}
-              <ul className="list-disc ml-5 mb-4 text-neutral-400">
-                {experience.description.map((desc, descIndex) => (
-                  <li key={descIndex} className="mb-2">
+              <ul className="mb-4 ml-5 list-disc space-y-2 text-neutral-300">
+                {experience.description.map((desc) => (
+                  <li key={desc} className="leading-relaxed">
                     {desc}
                   </li>
                 ))}
               </ul>
 
-              {/* Technologies Used */}
-              <p className="mb-4 text-neutral-400">
-                {experience.technologies.map((tech, techIndex) => (
-                  <span
-                    key={techIndex}
-                    className="mr-2 mt-4 rounded bg-neutral-900 px-2 py-1 text-sm font-medium text-purple-800"
-                    aria-label={`Technology used: ${tech}`}
-                    title={tech}
-                  >
+              <div className="mb-4 flex flex-wrap gap-2">
+                {experience.technologies.map((tech) => (
+                  <span key={tech} className={CHIP} title={tech}>
                     {tech}
                   </span>
                 ))}
-              </p>
+              </div>
             </motion.div>
           </article>
         ))}
       </div>
-    </div>
+    </section>
   );
 };
 

@@ -7,3 +7,15 @@
 :root {
   font-family: "Inter", sans-serif;
 }
+
+/* Anchor jumps must clear the sticky navbar. */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 6rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
