@@ -1078,3 +1078,105 @@ Then SEO-003 (priority 7), which is the natural pairing since it is also
 index.html head work AND PERF-003 step 1 depends on its preconnect hints.
 A11Y-004 (priority 8) is now fully unblocked and has a trustworthy axe — but
 read the step 7 finding above before you write its tests.
+
+--------------------------------------------------------------------------
+2026-08-12 — SEO-002 (priority 6, seo): the obsolete meta keywords tag is
+             gone. Four lines deleted, and that is the whole feature.
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+Highest-priority item still open, and the last three loop entries each ended
+by nominating it and then doing something else. The POLISH-001 loop skipped it
+on the grounds that its real-world impact is approximately zero, which is
+TRUE — no major engine has used meta keywords for over a decade. But it is
+still the head of the queue, it is the only thing standing between the board
+and a clean run of the priority order, and a deferral that repeats four times
+is just a rotting item. Took it in priority order and finished it properly.
+SEO-003 (priority 7) is untouched and is now the top of the queue.
+
+Set expectations honestly: this is a small commit. That is the correct size
+for this item, not a shortfall. The value is that the queue is now honest.
+
+WHAT WAS DONE
+Deleted the 4-line <meta name="keywords" content="..."> element that sat at
+index.html lines 25-28, between the description and author tags. That is the
+entire diff. No other file changed, nothing was added.
+
+The second half of this item's description — "every other requested SEO tag is
+already present and correct and needs no change" — I RE-CHECKED rather than
+trusting, since that claim is what licenses doing nothing else. It holds. All
+of title, description, author, canonical, theme-color, icon, og:type,
+og:site_name, og:title, og:description, og:url, og:image, og:image:width,
+og:image:height, og:image:alt, og:locale, twitter:card, twitter:title,
+twitter:description, twitter:image and the JSON-LD Person block are present
+exactly once and are correct. So nothing was added.
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems
+- yarn build -> pass (only the fetchPriority SSR warning that RENDER-002's
+  notes say explicitly not to "fix")
+- step 2: grep -c 'name="keywords"' index.html            -> 0
+          and 0 hits across index.html, src/, public/, scripts/
+          (public/404.html never carried one)
+- step 3: canonical / property="og:image" / og:type / og:url / twitter:card /
+          application/ld+json                             -> 1 each
+- step 4: JSON-LD extracted by regex and JSON.parse'd     -> exactly 1 block,
+          parses clean, @type Person, 12 keys
+SEO-002 is browserTest:false, so the above code/CLI verification is sufficient
+per the loop instructions.
+
+RE-RAN EVERY ASSERTION AGAINST THE BUILT dist/index.html TOO, and this is not
+busywork: since RENDER-002 landed, index.html is a TEMPLATE that the prerender
+step rewrites, so "correct in the source" and "correct in what ships" are now
+two different claims. In dist/index.html: keywords 0; canonical, og:image,
+twitter:card and ld+json 1 each; the JSON-LD still parses; prerender still
+injected 56,457 chars (60,280 bytes total, "Senior full stack engineer" x4,
+0 inline opacity:0). Head edits do not disturb the prerender.
+
+>>> GREP TRAP IN THIS FILE — YOU WILL HIT IT IF YOU VERIFY HEAD TAGS <<<
+Prettier formats these meta tags ACROSS MULTIPLE LINES:
+    <meta
+      property="og:image"
+      content="https://www.dilshersingh.com/og-image.jpg"
+    />
+Two consequences. A grep for a whole tag on one line silently finds NOTHING and
+looks like the tag is missing. And `grep -c 'og:image'` returns 4, not 1,
+because it also catches og:image:width / :height / :alt. Match on the attribute
+alone: `grep -cF 'property="og:image"'`.
+Also, and this cost me a minute of confusion mid-run: inside a SINGLE-quoted
+shell string, escaping the inner quotes as \" leaves the backslashes literal
+and the grep returns 0 — which reads exactly like a missing tag. I briefly
+recorded og:image as absent from dist/ for that reason before checking the raw
+bytes with python. If a tag "disappears" only in one of your checks, suspect
+your quoting before you suspect the build.
+
+NOTES FOR WHOEVER IS NEXT
+- Environment was CLEAN for the third loop running: node_modules/.bin
+  populated, lint and build worked on arrival, nothing squatting on port 3000.
+  The gotcha streak from the earlier entries (empty .bin, npm rewriting
+  yarn.lock, wrong-platform rollup/sharp binaries) has not repeated. Still
+  worth `ps aux | grep vite` before trusting localhost:3000.
+- SEO-003 (priority 7) is the natural next item and touches this same head
+  block: preconnect hints, apple-touch-icon, site.webmanifest, og:image:type,
+  twitter:image:alt, and deleting public/vite.svg. PERF-003 step 1 depends on
+  its preconnect hints, so doing SEO-003 next unblocks PERF-003 as well.
+  Two things to carry into it from earlier entries: SEO-001's note says
+  og:image:type must be image/jpeg and og-image.jpg must NOT be converted to
+  WebP (several scrapers handle WebP poorly), and PERF-001's note says public/
+  is copied VERBATIM and is not touched by the sharp pipeline, so the new PNG
+  icons will ship at whatever size you generate them.
+- A11Y-004 (priority 8) is fully unblocked and now has a trustworthy axe, but
+  read POLISH-001's finding first: its step 7 (region/bypass rules) already
+  passes today and cannot detect the defect. Step 6 is the real gate.
+- STILL OUTSTANDING FROM EARLIER LOOPS, ALL STILL NOT DONE, ALL HUMAN ACTIONS:
+  SEC-001's Vercel GITHUB_TOKEN env var and REVOKING THE LEAKED TOKEN (it is
+  still live and still in the deployed bundle); SEO-001's post-deploy og-image
+  200 check plus the LinkedIn/X re-scrape; RENDER-002's post-deploy
+  `curl -s https://www.dilshersingh.com | grep -c 'Senior full stack'`.
+- Also still unowned by any PRD item: the sticky header does not actually
+  stick (diagnosis in the A11Y-003 entry — the root div's overflow-x-hidden).
+
+SUGGESTED NEXT ITEM
+SEO-003 (priority 7), for the reasons above — it is the top of the queue, it is
+the same head block, and it unblocks PERF-003. After that PERF-003 (priority 9)
+or A11Y-004 (priority 8).
