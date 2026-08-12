@@ -1,65 +1,49 @@
 import { CONTACT } from "../constants";
-import { motion } from "framer-motion";
+import Reveal from "./Reveal";
 import { FaLinkedin, FaGithub, FaWhatsapp } from "react-icons/fa";
 
 const Contact = () => {
   return (
     <section id="contact" className="scroll-mt-24 pb-20">
-      <motion.h2
-        whileInView={{ opacity: 1, y: 0 }}
-        initial={{ opacity: 0, y: -40 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-        className="my-10 text-center text-4xl"
-      >
+      <Reveal as="h2" className="my-10 text-center text-4xl">
         Get in Touch
-      </motion.h2>
+      </Reveal>
 
       <div className="text-center tracking-tight">
-        <motion.p
-          whileInView={{ opacity: 1, y: 0 }}
-          initial={{ opacity: 0, y: 20 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+        <Reveal
+          as="p"
+          from="below"
+          duration={0.6}
           className="mx-auto max-w-xl text-neutral-400"
         >
           I&apos;m open to conversations about backend and infrastructure roles,
           or anything involving systems that have to be correct with money on
           the line.
-        </motion.p>
+        </Reveal>
 
         {CONTACT.address && (
-          <motion.address
-            whileInView={{ opacity: 1, y: 0 }}
-            initial={{ opacity: 0, y: 20 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
+          <Reveal
+            as="address"
+            from="below"
+            duration={0.6}
             className="my-6 not-italic text-neutral-400"
           >
             {CONTACT.address}
-          </motion.address>
+          </Reveal>
         )}
 
-        <motion.p
-          whileInView={{ opacity: 1, y: 0 }}
-          initial={{ opacity: 0, y: 20 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="my-4"
-        >
+        <Reveal as="p" from="below" duration={0.6} className="my-4">
           <a
             href={`mailto:${CONTACT.email}`}
             className="border-b border-purple-400/40 text-lg text-purple-400 transition-colors hover:text-purple-300"
           >
             {CONTACT.email}
           </a>
-        </motion.p>
+        </Reveal>
 
-        <motion.div
-          whileInView={{ opacity: 1, y: 0 }}
-          initial={{ opacity: 0, y: 20 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+        <Reveal
+          from="below"
+          duration={0.6}
           className="mt-8 flex items-center justify-center gap-6 text-2xl"
         >
           <a
@@ -92,7 +76,7 @@ const Contact = () => {
           >
             <FaWhatsapp />
           </a>
-        </motion.div>
+        </Reveal>
 
         <p className="mt-16 text-sm text-neutral-500">
           © {new Date().getFullYear()} Dilsher Singh

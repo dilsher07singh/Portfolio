@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import Reveal from "./Reveal";
 
 const GithubContributions = () => {
   const [weeks, setWeeks] = useState([]);
@@ -50,15 +50,9 @@ const GithubContributions = () => {
       id="github"
       className="scroll-mt-24 border-b border-neutral-900 pb-4"
     >
-      <motion.h2
-        whileInView={{ opacity: 1, y: 0 }}
-        initial={{ opacity: 0, y: -40 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-        className="my-20 text-center text-4xl"
-      >
+      <Reveal as="h2" className="my-20 text-center text-4xl">
         GitHub Contributions
-      </motion.h2>
+      </Reveal>
 
       {status === "loading" && (
         <p className="mb-8 text-center text-neutral-500">

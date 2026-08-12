@@ -1,5 +1,5 @@
 import { ABOUT_TEXT } from "../constants";
-import { motion } from "framer-motion";
+import Reveal from "./Reveal";
 
 const HIGHLIGHTS = [
   { label: "Currently", value: "Senior Full Stack Engineer at Dualmint" },
@@ -14,23 +14,15 @@ const About = () => {
       id="about"
       className="scroll-mt-24 border-b border-neutral-900 pb-8"
     >
-      <motion.h2
-        whileInView={{ opacity: 1, y: 0 }}
-        initial={{ opacity: 0, y: -40 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-        className="my-20 text-center text-4xl"
-      >
+      <Reveal as="h2" className="my-20 text-center text-4xl">
         About <span className="text-neutral-500">Me</span>
-      </motion.h2>
+      </Reveal>
 
       <div className="flex flex-wrap items-start">
         {/* Bio */}
-        <motion.div
-          whileInView={{ opacity: 1, x: 0 }}
-          initial={{ opacity: 0, x: -60 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
+        <Reveal
+          from="left"
+          distance={60}
           className="w-full lg:w-3/5 lg:pr-12"
         >
           {ABOUT_TEXT.split("\n\n").map((paragraph) => (
@@ -41,14 +33,12 @@ const About = () => {
               {paragraph}
             </p>
           ))}
-        </motion.div>
+        </Reveal>
 
         {/* At-a-glance highlights */}
-        <motion.div
-          whileInView={{ opacity: 1, x: 0 }}
-          initial={{ opacity: 0, x: 60 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
+        <Reveal
+          from="right"
+          distance={60}
           className="mt-8 w-full lg:mt-0 lg:w-2/5"
         >
           <dl className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-6">
@@ -61,7 +51,7 @@ const About = () => {
               </div>
             ))}
           </dl>
-        </motion.div>
+        </Reveal>
       </div>
     </section>
   );

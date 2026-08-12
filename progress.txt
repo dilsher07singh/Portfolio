@@ -79,3 +79,89 @@ SEO-001 (priority 2) is nearly free — public/og-image.jpg is already on disk a
 Note it is currently untracked in git and I did NOT include it in this commit.
 RENDER-001 (priority 2) is the bigger, more valuable piece of work and is a hard
 prerequisite for RENDER-002.
+
+--------------------------------------------------------------------------
+2026-08-12 — RENDER-001 (priority 2, rendering): entry animations now
+             degrade to visible content and honor prefers-reduced-motion
+--------------------------------------------------------------------------
+
+WHY THIS ONE
+SEO-001 and RENDER-001 are both priority 2. SEO-001 is a one-line `git add`;
+RENDER-001 is the real work, fixes a live accessibility defect (nothing in the
+codebase honored prefers-reduced-motion), and is the hard prerequisite for
+RENDER-002. Took RENDER-001 and left SEO-001 untouched — public/og-image.jpg
+is STILL untracked and still owned by SEO-001.
+
+HOUSEKEEPING COMMIT FIRST — PLEASE READ
+The working tree contained a large uncommitted redesign predating this loop
+and touching every file RENDER-001 needed. I committed it unchanged first
+(628f7d9 "Checkpoint the in-flight redesign already in the working tree") so
+this feature's diff is reviewable in isolation. I modified nothing to produce
+that commit. If you wanted that work kept out of history, `git reset` it —
+but do it before building on top.
+
+WHAT WAS DONE
+The old approach was framer-motion `initial={{ opacity: 0 }}`, which writes an
+INLINE style. Two consequences: prerendered HTML would ship text at opacity 0
+(defeating RENDER-002), and a CSS media query cannot override an inline style
+so reduced motion was unfixable in CSS.
+
+Replaced with an additive mechanism — content is visible unless proven
+otherwise:
+- src/components/Reveal.jsx (new): polymorphic `as` component, IntersectionObserver
+  adds `.is-visible`. Props: as / from / distance / duration / delay. The
+  defaults reproduce the exact offsets and durations the framer-motion props
+  used, so the animation looks the same.
+- src/index.css: `.reveal` sets CSS vars only. The hiding rule is
+  `.js .reveal` nested inside @media (prefers-reduced-motion: no-preference).
+  Three conditions must ALL hold before anything is hidden: scripts running,
+  no reduced-motion preference, not yet revealed.
+- index.html: a synchronous inline <script> in <head> adds `js` to <html>.
+  It must stay inline and stay in the head — that is what prevents a
+  visible-then-hidden flash once RENDER-002 prerenders, and it is why JS-off
+  visitors are never hidden.
+- 31 animated elements converted across Hero, About, Technologies, Experience,
+  Projects, GithubContributions, Contact. Zero framer-motion imports remain.
+
+DELIBERATE DEVIATION FROM PRD STEP 1 — no MotionConfig
+The PRD asked for <MotionConfig reducedMotion="user"> in App.jsx. After the
+conversion there are no framer-motion components left, so MotionConfig would
+have configured nothing — dead code. The CSS media query does the same job
+strictly better: it applies before hydration and with JS disabled, neither of
+which MotionConfig can. App.jsx is therefore untouched. Recorded in the PRD notes.
+
+FEEDBACK LOOPS — all green
+- yarn lint  -> pass, 0 problems
+- yarn build -> pass
+- Playwright, reducedMotion 'reduce': all 31 reveals opacity 1 / transform none
+  IMMEDIATELY, with is-visible still false — visibility does not depend on JS
+- Playwright, default motion: below-fold elements correctly staged at
+  opacity 0 / translateY(-40px), then transition in on scroll. Full
+  viewport-by-viewport scroll pass -> 31/31 revealed, 0 stranded
+- Playwright, javaScriptEnabled false, against a prerender stand-in (client DOM
+  baked into dist/index.html, module script stripped): all 7 headings visible,
+  hero bio visible, 0/31 reveals hidden, and 0 inline 'opacity:0' in the 107KB
+  static HTML. This pre-validates RENDER-002's final assertion.
+- 0 console errors/warnings; no horizontal overflow at 375px
+
+NOTES FOR WHOEVER IS NEXT
+- framer-motion is now UNUSED but still in package.json. Dropping the import
+  alone already cut the main chunk 299KB -> 187KB (gzip 100KB -> 63.5KB),
+  because Vite no longer bundles it. I did not remove the dependency — that is
+  a judgement call, and PERF-004 still lists framer-motion as a vendor chunk to
+  split. If you remove it, update PERF-004's step accordingly.
+- Reveal.jsx carries a file-level `eslint-disable react/prop-types` with a
+  reason. It is the only component taking props, and satisfying the rule meant
+  adding the prop-types package as a runtime dep for dev-only validation. If
+  POLISH-003 adds TypeScript, delete that line.
+- Reveal renders `children`, so do NOT use as="img" or any void element. The
+  Hero avatar is wrapped in a Reveal div instead (it replaced the old
+  `flex justify-center` wrapper, so no extra nesting was added).
+- I preserved Hero's staggered delays (0 / 0.5 / 0.75 / 1, image 1.2) exactly.
+  PERF-002 owns removing them — it is priority 4 and those delays are still
+  capping LCP. RENDER-001 changed the mechanism, not the timing.
+- RENDER-002 is now unblocked and its riskiest assumption is already proven.
+
+SUGGESTED NEXT ITEM
+SEO-001 (priority 2, still a one-line `git add public/og-image.jpg`), then
+RENDER-002 (priority 5) now that its prerequisite is done and pre-validated.

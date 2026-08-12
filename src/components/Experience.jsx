@@ -1,5 +1,5 @@
 import { EXPERIENCES } from "../constants";
-import { motion } from "framer-motion";
+import Reveal from "./Reveal";
 
 // Kept identical to the chip in Projects.jsx.
 const CHIP =
@@ -11,15 +11,9 @@ const Experience = () => {
       id="experience"
       className="scroll-mt-24 border-b border-neutral-900 pb-4"
     >
-      <motion.h2
-        whileInView={{ opacity: 1, y: 0 }}
-        initial={{ opacity: 0, y: -40 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-        className="my-20 text-center text-4xl"
-      >
+      <Reveal as="h2" className="my-20 text-center text-4xl">
         Experience
-      </motion.h2>
+      </Reveal>
 
       <div>
         {EXPERIENCES.map((experience) => (
@@ -28,22 +22,14 @@ const Experience = () => {
             className="mb-12 flex flex-wrap lg:justify-center"
           >
             {/* Dates */}
-            <motion.div
-              whileInView={{ opacity: 1, x: 0 }}
-              initial={{ opacity: 0, x: -100 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1 }}
-              className="w-full lg:w-1/4"
-            >
+            <Reveal from="left" duration={1} className="w-full lg:w-1/4">
               <p className="mb-3 text-sm text-neutral-500">{experience.year}</p>
-            </motion.div>
+            </Reveal>
 
             {/* Role, achievements and stack */}
-            <motion.div
-              whileInView={{ opacity: 1, x: 0 }}
-              initial={{ opacity: 0, x: 100 }}
-              viewport={{ once: true }}
-              transition={{ duration: 1 }}
+            <Reveal
+              from="right"
+              duration={1}
               className="w-full max-w-xl lg:w-3/4"
             >
               <h3 className="mb-2 font-semibold">
@@ -68,7 +54,7 @@ const Experience = () => {
                   </span>
                 ))}
               </div>
-            </motion.div>
+            </Reveal>
           </article>
         ))}
       </div>

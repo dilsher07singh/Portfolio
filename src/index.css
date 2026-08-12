@@ -19,3 +19,35 @@ html {
     scroll-behavior: auto;
   }
 }
+
+/*
+  Entry reveals.
+
+  Additive by design: an element stays visible unless all three of these hold —
+  scripts are running (html.js, set synchronously in index.html), the visitor
+  has not asked for reduced motion, and JavaScript has not yet marked it
+  revealed. Prerendered HTML, crawlers, no-JS visitors and reduced-motion
+  visitors therefore never encounter opacity 0, which is what the old
+  framer-motion `initial={{ opacity: 0 }}` inline styles could not guarantee.
+*/
+.reveal {
+  --reveal-x: 0px;
+  --reveal-y: 0px;
+  --reveal-duration: 0.5s;
+  --reveal-delay: 0s;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .js .reveal {
+    opacity: 0;
+    transform: translate3d(var(--reveal-x), var(--reveal-y), 0);
+  }
+
+  .js .reveal.is-visible {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity var(--reveal-duration) ease-out var(--reveal-delay),
+      transform var(--reveal-duration) ease-out var(--reveal-delay);
+  }
+}

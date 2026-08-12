@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import Reveal from "./Reveal";
 import {
   SiTypescript,
   SiExpress,
@@ -41,21 +41,14 @@ const Technologies = () => {
       id="technologies"
       className="scroll-mt-24 border-b border-neutral-800 pb-24"
     >
-      <motion.h2
-        whileInView={{ opacity: 1, y: 0 }}
-        initial={{ opacity: 0, y: -40 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-        className="my-20 text-center text-4xl"
-      >
+      <Reveal as="h2" duration={0.6} className="my-20 text-center text-4xl">
         Technologies
-      </motion.h2>
+      </Reveal>
 
-      <motion.ul
-        whileInView={{ opacity: 1 }}
-        initial={{ opacity: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.8 }}
+      <Reveal
+        as="ul"
+        from="fade"
+        duration={0.8}
         className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-3"
       >
         {TECHNOLOGIES.map((tech) => {
@@ -72,7 +65,7 @@ const Technologies = () => {
             </li>
           );
         })}
-      </motion.ul>
+      </Reveal>
     </section>
   );
 };

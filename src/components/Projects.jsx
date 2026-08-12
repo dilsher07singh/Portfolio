@@ -1,5 +1,5 @@
 import { PROJECTS } from "../constants";
-import { motion } from "framer-motion";
+import Reveal from "./Reveal";
 import { FaArrowRight } from "react-icons/fa";
 
 // Kept identical to the chip in Experience.jsx.
@@ -12,15 +12,9 @@ const Projects = () => {
       id="projects"
       className="scroll-mt-24 border-b border-neutral-900 pb-4"
     >
-      <motion.h2
-        whileInView={{ opacity: 1, y: 0 }}
-        initial={{ opacity: 0, y: -40 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5 }}
-        className="my-20 text-center text-4xl"
-      >
+      <Reveal as="h2" className="my-20 text-center text-4xl">
         Projects
-      </motion.h2>
+      </Reveal>
 
       <div className="space-y-8">
         {PROJECTS.map((project) => (
@@ -34,27 +28,19 @@ const Projects = () => {
           >
             <div className="flex flex-wrap rounded-xl border border-neutral-800 bg-neutral-900/40 p-6 transition-colors duration-300 hover:border-purple-600/60 lg:justify-center">
               {/* Screenshot */}
-              <motion.div
-                whileInView={{ opacity: 1, x: 0 }}
-                initial={{ opacity: 0, x: -100 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-                className="w-full lg:w-1/4"
-              >
+              <Reveal from="left" className="w-full lg:w-1/4">
                 <img
                   src={project.image}
                   loading="lazy"
                   alt={`Screenshot of the project ${project.title}`}
                   className="mb-6 w-full max-w-[200px] rounded-lg object-cover"
                 />
-              </motion.div>
+              </Reveal>
 
               {/* Detail */}
-              <motion.div
-                whileInView={{ opacity: 1, x: 0 }}
-                initial={{ opacity: 0, x: 100 }}
-                viewport={{ once: true }}
-                transition={{ duration: 1 }}
+              <Reveal
+                from="right"
+                duration={1}
                 className="w-full max-w-xl lg:w-3/4"
               >
                 <h3 className="mb-2 text-xl font-semibold">{project.title}</h3>
@@ -74,7 +60,7 @@ const Projects = () => {
                   <span className="mr-2 font-semibold">View Project</span>
                   <FaArrowRight aria-hidden="true" />
                 </div>
-              </motion.div>
+              </Reveal>
             </div>
           </a>
         ))}
