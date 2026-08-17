@@ -1,0 +1,13 @@
+[
+    {
+        "category": "functional",
+        "description": "New chat button creates a fresh conversation",
+        "steps": [
+            "Click the 'New Chat' button",
+            "Verify a new conversation is created",
+            "Check that chat area shows welcome state"
+        ],
+        "passes": false,
+        "browserTest": false
+    }
+]
