@@ -34,12 +34,20 @@ const Navbar = () => {
           room in view when tabbing scrolls a link horizontally; the matching
           `-m-1` cancels the padding so the navbar's layout is unchanged.
         */}
+        {/*
+          `py-1.5` on the anchors, not the <li>: WCAG 2.2 SC 2.5.8 measures the
+          target — the clickable box — so padding has to land on the <a> itself.
+          The 14px text line box is 17px tall, which the 4px+4px of vertical
+          padding lifts to 25px. `gap-5` (20px) already clears the horizontal
+          side. The row does not grow: the navbar is taller than 25px, so the
+          extra height is absorbed by `items-center`.
+        */}
         <ul className="-m-1 flex max-w-full items-center gap-5 overflow-x-auto scroll-p-1 p-1 text-sm text-neutral-400">
           {NAV_LINKS.map((link) => (
             <li key={link.href}>
               <a
                 href={link.href}
-                className="whitespace-nowrap transition-colors hover:text-purple-400 focus-visible:text-purple-400"
+                className="block whitespace-nowrap py-1.5 transition-colors hover:text-purple-400 focus-visible:text-purple-400"
               >
                 {link.label}
               </a>
@@ -54,7 +62,21 @@ const Navbar = () => {
           as a second, unnamed graphic node. Same treatment as Technologies.jsx
           and the arrows in Projects.jsx.
         */}
-        <div className="flex items-center justify-center gap-4 text-xl lg:text-2xl">
+        {/*
+          `p-1` on each anchor takes the icons from 20x20 to 28x28. At text-xl
+          the glyph is 20px and the gap between icons is 16px, so BOTH halves of
+          SC 2.5.8 failed: under the 24x24 minimum, and too close together to
+          claim the spacing exception. Padding is the fix rather than a bigger
+          glyph, because it grows the target without changing the design.
+
+          `-m-1` on the row cancels the padding at the container's outer edge so
+          the row occupies the same space in the navbar as before. Measured
+          after the change: targets are 28x28 with 16px still between them —
+          `gap-4` sits between flex items, so the negative margin does not close
+          it. That is fine; the 24x24 minimum is met on size alone, and the
+          spacing exception is only needed for targets that stay under it.
+        */}
+        <div className="-m-1 flex items-center justify-center gap-4 p-1 text-xl lg:text-2xl">
           {SOCIALS.map(({ id, href, label, Icon }) => (
             <a
               key={id}
@@ -63,7 +85,7 @@ const Navbar = () => {
               rel="noopener noreferrer"
               title={label}
               aria-label={label}
-              className="transition-colors hover:text-purple-400"
+              className="p-1 transition-colors hover:text-purple-400"
             >
               <Icon aria-hidden="true" />
             </a>

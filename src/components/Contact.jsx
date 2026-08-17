@@ -75,6 +75,12 @@ const Contact = () => {
             Matches Navbar.jsx, which renders the same entries from the same
             array.
           */}
+          {/*
+            `p-1` for the same SC 2.5.8 reason as Navbar.jsx. These are text-2xl
+            so the 24px glyph already met the minimum on its own; the padding is
+            here to keep the two rows of socials behaving identically and to
+            give the target a little margin for error on touch.
+          */}
           {CONTACT_SOCIALS.map(({ id, href, label, Icon }) => (
             <a
               key={id}
@@ -83,7 +89,7 @@ const Contact = () => {
               rel="noopener noreferrer"
               title={label}
               aria-label={label}
-              className="transition-colors hover:text-purple-400"
+              className="p-1 transition-colors hover:text-purple-400"
             >
               <Icon aria-hidden="true" />
             </a>

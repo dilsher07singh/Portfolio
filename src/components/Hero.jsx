@@ -119,11 +119,19 @@ const Hero = () => {
           first and the label beneath it. Reversing the flex direction keeps
           the markup order the semantics require while the rendering is
           unchanged to the pixel.
+
+          `justify-end` is load-bearing for alignment. Grid stretches each cell
+          to the row's height, and in a col-REVERSE box the main axis runs
+          bottom-to-top, so `justify-end` packs content at the *top*. Without
+          it the extra height lands above the figure: "Payout cycles, 100%
+          on-time" is the one label short enough to fit on a single line, so
+          its cell was 19px shorter in content than the three that wrap to two
+          lines, and its figure sat 19px lower than the others.
         */}
         {METRICS.map((metric) => (
           <div
             key={metric.label}
-            className="flex flex-col-reverse text-center lg:text-left"
+            className="flex flex-col-reverse justify-end text-center lg:text-left"
           >
             <dt className="mt-1 text-sm leading-snug text-neutral-400">
               {metric.label}

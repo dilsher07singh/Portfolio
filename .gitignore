@@ -13,6 +13,22 @@ dist-ssr
 *.local
 .env
 
+# Generated at build time by scripts/fetch-github.mjs, so it is not committed.
+# Regenerating needs GITHUB_TOKEN (set in the Vercel project env, and in .env
+# locally). The script exits 0 without writing when the token is absent, so a
+# build with no token SUCCEEDS but ships no file and the contributions graph
+# falls back to its error state — check this first if that graph goes blank.
+#
+# Note the other generated artifacts are deliberately NOT ignored:
+# public/{apple-touch-icon,icon-192,icon-512}.png + site.webmanifest, and
+# src/assets/optimized/*. Those are committed because the build depends on
+# them being present — generate-icons.mjs fails hard if the icons are missing,
+# and the optimized webp files are imported directly by components.
+public/github-contributions.json
+
+# Playwright MCP session scratch (page snapshots, console logs, screenshots).
+.playwright-mcp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
