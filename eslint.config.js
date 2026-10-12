@@ -41,9 +41,8 @@ export default [
     },
   },
   {
-    // Node build scripts and the Vercel API routes: no browser globals, and
-    // `process`/`URL` come from Node.
-    files: ['scripts/**/*.mjs', 'api/**/*.js', '*.config.js', 'vitest.config.js'],
+    // Node build scripts: no browser globals, and `process`/`URL` come from Node.
+    files: ['scripts/**/*.mjs', '*.config.js', 'vitest.config.js'],
     languageOptions: { globals: globals.node },
   },
   {

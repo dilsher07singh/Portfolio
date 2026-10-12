@@ -19,5 +19,5 @@
     "strict": false,
     "types": ["vite/client", "node"]
   },
-  "include": ["src", "scripts", "api", "*.js", "*.config.js"]
+  "include": ["src", "scripts", "*.js", "*.config.js"]
 }
