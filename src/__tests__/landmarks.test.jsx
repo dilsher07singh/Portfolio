@@ -8,14 +8,14 @@ import App from "../App.jsx";
 const REGION_NAMES = [
   "Dilsher Singh",
   "About Me",
-  "Technologies",
+  "Selected work",
   "Experience",
-  "Projects",
+  "Skills",
   "GitHub Contributions",
   "Get in Touch",
 ];
 
-// GithubContributions fetches a build-time JSON file on mount. Left unstubbed,
+// GithubContributions fetches its API route on mount. Left unstubbed,
 // jsdom rejects the relative URL and the component logs an error while falling
 // into its error state — noisy, and unrelated to what these tests assert.
 const stubEmptyContributions = () => {

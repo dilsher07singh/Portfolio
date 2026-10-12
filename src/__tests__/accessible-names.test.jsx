@@ -2,8 +2,8 @@ import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import Hero from "../components/Hero.jsx";
 import Navbar from "../components/Navbar.jsx";
-import Projects from "../components/Projects.jsx";
-import { METRICS, PROJECTS } from "../constants";
+import Work from "../components/Work.jsx";
+import { CASE_STUDIES, EARLIER_PROJECT, METRICS } from "../constants";
 
 describe("Navbar", () => {
   it("names the logo link once, from the anchor rather than the image", () => {
@@ -48,38 +48,35 @@ describe("Hero metrics", () => {
   });
 });
 
-describe("Projects", () => {
-  it("names each card link from its heading plus the new-tab hint", () => {
-    render(<Projects />);
+describe("Selected work", () => {
+  it("keeps each case study's title, summary and result visible without expanding", () => {
+    const { container } = render(<Work />);
 
-    for (const project of PROJECTS) {
-      const link = screen.getByRole("link", {
-        name: `${project.title} (opens in a new tab)`,
-      });
-      expect(link).toHaveAttribute("href", project.link);
-      expect(link).toHaveAttribute("target", "_blank");
-      expect(link).toHaveAttribute("rel", "noopener noreferrer");
-      // The old label claimed a details page that does not exist.
-      expect(link).not.toHaveAttribute("aria-label");
+    for (const study of CASE_STUDIES) {
+      const summary = screen
+        .getByRole("heading", { name: study.title })
+        .closest("summary");
+      expect(summary).not.toBeNull();
+      expect(summary).toHaveTextContent(study.summary);
+      expect(summary).toHaveTextContent(study.result);
     }
+    // Collapsed by default; the detail is one click away, not on screen.
+    expect(container.querySelectorAll("details[open]")).toHaveLength(0);
   });
 
-  it("keeps the card body reachable inside the link", () => {
-    render(<Projects />);
+  it("names the earlier-work link from its title plus the new-tab hint", () => {
+    render(<Work />);
 
-    for (const project of PROJECTS) {
-      const link = screen.getByRole("link", {
-        name: `${project.title} (opens in a new tab)`,
-      });
-      expect(link).toHaveTextContent(project.description);
-      for (const tech of project.technologies) {
-        expect(within(link).getByText(tech)).toBeInTheDocument();
-      }
-    }
+    const link = screen.getByRole("link", {
+      name: `${EARLIER_PROJECT.title} (opens in a new tab)`,
+    });
+    expect(link).toHaveAttribute("href", EARLIER_PROJECT.link);
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
   it("does not repeat a chip's visible text in a title attribute", () => {
-    const { container } = render(<Projects />);
+    const { container } = render(<Work />);
 
     expect(container.querySelectorAll("span[title]")).toHaveLength(0);
   });

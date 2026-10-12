@@ -1,133 +1,111 @@
-import { HERO_CONTENT, METRICS } from "../constants";
+import { HERO, METRICS, SOCIALS } from "../constants";
 import profilePic from "../assets/optimized/dilsherSinghProfile.webp";
-import Reveal from "./Reveal";
+import dimensions from "../assets/optimized/dimensions.json";
 
-// Entry animation length for the above-the-fold hero text. See the note beside
-// the elements below: on this page it is paid directly in LCP.
-const HERO_DURATION = 0.3;
+const profileSize = dimensions["dilsherSinghProfile.webp"];
 
+// No entry animation anywhere in the hero. The brief asks for no heavy
+// animation here, and every reveal on an above-the-fold element is paid
+// directly in LCP: Chrome does not record an opacity-transitioning element as
+// painted until the transition finishes.
 const Hero = () => {
   return (
     <section
       id="hero"
       aria-labelledby="hero-heading"
-      className="scroll-mt-24 pb-4 border-b border-neutral-900 lg:mb-16"
+      className="scroll-mt-24 border-b border-neutral-900 pb-4 lg:mb-16"
     >
-      <div className="flex flex-col lg:flex-row">
-        {/* Content Section */}
-        <div className="w-full lg:w-1/2">
-          <div className="flex flex-col items-center lg:items-start">
-            {/*
-              These four are above the fold, and on narrow viewports — where the
-              avatar drops below it — the h1 and the bio are the LCP candidates.
-              Chrome does not record an opacity-transitioning element as painted
-              until the transition finishes, so every element's delay AND
-              duration are added straight onto LCP. Both are therefore kept
-              short and staggered tightly: the whole hero settles in 0.45s,
-              where it previously took 1.7s. Anything below the fold keeps the
-              default 0.5s, since it has scrolled into view long after LCP.
-            */}
-            <Reveal
-              as="h1"
-              id="hero-heading"
-              from="left"
-              duration={HERO_DURATION}
-              className="pb-4 text-6xl font-thin tracking-tight lg:mt-16 lg:text-8xl"
-            >
-              Dilsher Singh
-            </Reveal>
+      <div className="flex flex-col gap-10 pt-10 lg:flex-row lg:items-center lg:pt-16">
+        <div className="w-full lg:w-3/5">
+          <h1
+            id="hero-heading"
+            className="text-5xl font-thin tracking-tight sm:text-6xl lg:text-7xl"
+          >
+            {HERO.name}
+          </h1>
+          <p className="mt-3 bg-gradient-to-r from-pink-300 via-slate-500 to-purple-500 bg-clip-text text-2xl tracking-tight text-transparent sm:text-3xl">
+            {HERO.title}
+          </p>
 
-            <Reveal
-              as="span"
-              from="left"
-              duration={HERO_DURATION}
-              delay={0.05}
-              className="text-3xl tracking-tight text-transparent bg-gradient-to-r from-pink-300 via-slate-500 to-purple-500 bg-clip-text"
-            >
-              Senior Full Stack Engineer
-            </Reveal>
+          <p className="mt-8 max-w-2xl text-2xl font-light leading-snug tracking-tight text-neutral-100 sm:text-3xl">
+            {HERO.tagline}
+          </p>
+          <p className="mt-4 max-w-xl font-light leading-relaxed text-neutral-300">
+            {HERO.subline}
+          </p>
 
-            <Reveal
-              as="p"
-              from="left"
-              duration={HERO_DURATION}
-              delay={0.1}
-              className="mt-3 text-sm tracking-tight text-neutral-400"
-            >
-              Hong Kong · BEng Computer Engineering, HKUST
-            </Reveal>
+          <ul className="mt-6 flex flex-wrap gap-2 text-sm text-neutral-300">
+            {HERO.badges.map((badge) => (
+              <li
+                key={badge}
+                className="rounded-full border border-neutral-700 bg-neutral-900/60 px-3 py-1"
+              >
+                {badge}
+              </li>
+            ))}
+          </ul>
 
-            <Reveal
-              as="p"
-              from="left"
-              duration={HERO_DURATION}
-              delay={0.15}
-              className="max-w-xl py-6 my-2 font-light leading-relaxed tracking-tight"
-            >
-              {HERO_CONTENT}
-            </Reveal>
+          {/*
+            The brief's calls to action. Email is the primary one, so it is the
+            filled button; LinkedIn and GitHub are outlined. Icons are
+            decorative: each link is named by its visible text.
+          */}
+          <div className="mt-8 flex flex-wrap gap-3">
+            {SOCIALS.map(({ id, href, text, Icon }) => {
+              const external = href.startsWith("https://");
+              return (
+                <a
+                  key={id}
+                  href={href}
+                  {...(external
+                    ? { target: "_blank", rel: "noopener noreferrer" }
+                    : {})}
+                  className={
+                    id === "email"
+                      ? "inline-flex items-center gap-2 rounded-lg bg-purple-500 px-4 py-2.5 font-medium text-neutral-950 transition-colors hover:bg-purple-400"
+                      : "inline-flex items-center gap-2 rounded-lg border border-neutral-700 px-4 py-2.5 font-medium text-neutral-200 transition-colors hover:border-purple-400 hover:text-purple-300"
+                  }
+                >
+                  <Icon aria-hidden="true" />
+                  {text}
+                  {external && <span className="sr-only"> (opens in a new tab)</span>}
+                </a>
+              );
+            })}
           </div>
         </div>
 
-        {/* Profile Picture Section */}
-        <div className="w-full lg:w-1/2 lg:p-8">
-          {/*
-            Deliberately NOT wrapped in a Reveal. This is the LCP element, and
-            an entry animation holds it at opacity 0 — which browsers do not
-            count as painted — until React has hydrated and the observer has
-            fired. Rendering it plainly makes the largest paint happen on the
-            very first frame, independent of when (or whether) JavaScript runs.
+        {/*
+          The LCP element on wide viewports, so it is rendered plainly with a
+          high fetch priority rather than wrapped in a reveal.
 
-            `fetchPriority` makes the prerender build print "React does not
-            recognize the fetchPriority prop". That warning is EXPECTED and
-            cosmetic: React DOM 18's server renderer has no fetchPriority in
-            its known-prop list (the client renderer does), but it still emits
-            the attribute, and the HTML parser lowercases attribute names, so
-            the browser sees fetchpriority="high" either way. Do not "fix" it
-            by lowercasing the JSX — that trades the warning for a
-            react/no-unknown-property lint ERROR. It resolves itself on React 19.
-          */}
-          <div className="flex justify-center">
-            <img
-              className="max-w-xs rounded-2xl lg:max-w-sm"
-              src={profilePic}
-              width={384}
-              height={384}
-              loading="eager"
-              fetchPriority="high"
-              alt="Dilsher Singh, Senior Full Stack Engineer"
-            />
-          </div>
+          `fetchPriority` makes the prerender build print "React does not
+          recognize the fetchPriority prop". That warning is EXPECTED and
+          cosmetic: React DOM 18's server renderer has no fetchPriority in its
+          known-prop list, but it still emits the attribute, and the HTML parser
+          lowercases attribute names, so the browser sees fetchpriority="high"
+          either way. Lowercasing the JSX would trade it for a lint error.
+        */}
+        <div className="flex w-full justify-center lg:w-2/5">
+          <img
+            className="w-full max-w-[240px] rounded-2xl sm:max-w-[288px]"
+            src={profilePic}
+            width={profileSize.width}
+            height={profileSize.height}
+            loading="eager"
+            fetchPriority="high"
+            alt="Dilsher Singh"
+          />
         </div>
       </div>
 
-      {/* Headline metrics */}
-      <Reveal
-        as="dl"
-        from="below"
-        duration={0.6}
-        delay={0.2}
-        className="mt-12 grid grid-cols-2 gap-6 border-t border-neutral-700 pt-8 lg:grid-cols-4 lg:gap-8"
-      >
-        {/*
-          The label is a real <dt> now, not a screen-reader-only copy sitting
-          above a visible duplicate of the same string — that arrangement had
-          every metric announced twice.
-
-          The pair is reversed visually rather than in the DOM: a definition
-          list has to be term-then-definition, but the design shows the figure
-          first and the label beneath it. Reversing the flex direction keeps
-          the markup order the semantics require while the rendering is
-          unchanged to the pixel.
-
-          `justify-end` is load-bearing for alignment. Grid stretches each cell
-          to the row's height, and in a col-REVERSE box the main axis runs
-          bottom-to-top, so `justify-end` packs content at the *top*. Without
-          it the extra height lands above the figure: "Payout cycles, 100%
-          on-time" is the one label short enough to fit on a single line, so
-          its cell was 19px shorter in content than the three that wrap to two
-          lines, and its figure sat 19px lower than the others.
-        */}
+      {/*
+        The label is a real <dt>, reversed visually rather than in the DOM: a
+        definition list has to be term-then-definition, but the design shows
+        the figure first. `justify-end` packs content at the top of the
+        column-reverse box so figures line up when labels wrap differently.
+      */}
+      <dl className="mt-12 grid grid-cols-2 gap-6 border-t border-neutral-700 pt-8 lg:grid-cols-4 lg:gap-8">
         {METRICS.map((metric) => (
           <div
             key={metric.label}
@@ -141,7 +119,7 @@ const Hero = () => {
             </dd>
           </div>
         ))}
-      </Reveal>
+      </dl>
     </section>
   );
 };

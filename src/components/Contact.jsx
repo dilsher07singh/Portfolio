@@ -1,14 +1,8 @@
 import { CONTACT, SOCIALS } from "../constants";
 import Reveal from "./Reveal";
 
-// This section shows the three channels someone would actually reach out on;
-// the navbar carries the full set. Selecting by id keeps the displayed order
-// and the set itself explicit here, while the hrefs, labels and icons stay
-// defined once in src/constants.
-const CONTACT_SOCIAL_IDS = ["linkedin", "github", "whatsapp"];
-const CONTACT_SOCIALS = CONTACT_SOCIAL_IDS.map((id) =>
-  SOCIALS.find((social) => social.id === id)
-);
+// Email is shown as a text link above, so the icon row carries the rest.
+const CONTACT_SOCIALS = SOCIALS.filter((social) => social.id !== "email");
 
 // The copyright line that used to close this section now lives in the <footer>
 // in App.jsx, outside <main>, so it is exposed as a contentinfo landmark. The
@@ -40,9 +34,8 @@ const Contact = () => {
           duration={0.6}
           className="mx-auto max-w-xl text-neutral-400"
         >
-          I&apos;m open to conversations about backend and infrastructure roles,
-          or anything involving systems that have to be correct with money on
-          the line.
+          Email is the quickest way to reach me. I am also on LinkedIn and
+          GitHub.
         </Reveal>
 
         {CONTACT.address && (

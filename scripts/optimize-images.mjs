@@ -27,11 +27,9 @@ const DIMENSIONS = resolve(OUT_DIR, "dimensions.json");
 // width is ~2x the largest size the image is ever displayed at, so the file is
 // crisp on retina without paying for the 1900-2553px source widths.
 const TARGETS = [
-  // Rendered by Hero.jsx at max-w-sm / width=384.
-  { input: "dilsherSinghProfile.png", width: 768, quality: 78 },
-  // Rendered by Projects.jsx at max-w-[200px].
-  { input: "project-1.png", width: 400, quality: 76 },
-  { input: "project-2.png", width: 400, quality: 76 },
+  // Rendered by Hero.jsx as a 3:4 portrait, at most 288px wide.
+  { input: "dilsherSinghProfile.png", width: 576, quality: 78 },
+  // The Ipseity Network card in Work.jsx, at most 200px wide.
   { input: "project-3.png", width: 400, quality: 76 },
 ];
 

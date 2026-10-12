@@ -1,9 +1,12 @@
 import logo from "../assets/dilsherSinghLogo2.png";
 import { NAV_LINKS, SOCIALS } from "../constants";
 
+// Sticky from lg up only. At phone widths the logo, links and icons stack into
+// a ~140px block, and pinning that to the top cost a sixth of the screen on
+// every scroll.
 const Navbar = () => {
   return (
-    <header className="sticky top-0 z-50 border-b border-neutral-900/80 bg-neutral-950/70 backdrop-blur">
+    <header className="z-50 border-b border-neutral-900/80 bg-neutral-950/70 backdrop-blur lg:sticky lg:top-0">
       <nav
         aria-label="Primary"
         className="container mx-auto flex flex-col items-center gap-3 px-8 py-4 lg:flex-row lg:justify-between lg:gap-6"
@@ -26,13 +29,9 @@ const Navbar = () => {
 
         {/* Section anchors */}
         {/*
-          `overflow-x-auto` makes this a scroll container, which clips its
-          children — including the 2px focus ring and its 2px offset. Without
-          headroom the ring loses its top and bottom bars outright, and the
-          first and last links lose their outer bar. `p-1` gives the clip box
-          the 4px the ring needs on every side and `scroll-p-1` keeps that
-          room in view when tabbing scrolls a link horizontally; the matching
-          `-m-1` cancels the padding so the navbar's layout is unchanged.
+          The links wrap rather than scroll sideways. A horizontally scrolling
+          row hid "Contact" off-screen at phone widths with nothing to say it
+          was there.
         */}
         {/*
           `py-1.5` on the anchors, not the <li>: WCAG 2.2 SC 2.5.8 measures the
@@ -42,7 +41,7 @@ const Navbar = () => {
           side. The row does not grow: the navbar is taller than 25px, so the
           extra height is absorbed by `items-center`.
         */}
-        <ul className="-m-1 flex max-w-full items-center gap-5 overflow-x-auto scroll-p-1 p-1 text-sm text-neutral-400">
+        <ul className="flex max-w-full flex-wrap items-center justify-center gap-x-5 text-sm text-neutral-400">
           {NAV_LINKS.map((link) => (
             <li key={link.href}>
               <a
@@ -81,8 +80,9 @@ const Navbar = () => {
             <a
               key={id}
               href={href}
-              target="_blank"
-              rel="noopener noreferrer"
+              {...(href.startsWith("https://")
+                ? { target: "_blank", rel: "noopener noreferrer" }
+                : {})}
               title={label}
               aria-label={label}
               className="p-1 transition-colors hover:text-purple-400"

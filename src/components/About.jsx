@@ -3,7 +3,7 @@ import Reveal from "./Reveal";
 
 const HIGHLIGHTS = [
   { label: "Currently", value: "Senior Full Stack Engineer at Dualmint" },
-  { label: "Leading", value: "A team of 5, owning backend and infrastructure" },
+  { label: "Leading", value: "A team of five engineers" },
   { label: "Based in", value: "Hong Kong · Permanent Resident" },
   { label: "Education", value: "BEng Computer Engineering, HKUST (2018–2022)" },
 ];
