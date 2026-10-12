@@ -33,7 +33,7 @@ afterEach(() => {
 });
 
 describe("GithubContributions", () => {
-  it("reads the build-time JSON with no credential attached", async () => {
+  it("reads the live API route with no credential attached", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => CALENDAR,
@@ -44,9 +44,10 @@ describe("GithubContributions", () => {
     await screen.findByRole("img");
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    // SEC-001: a static file, and crucially no second argument — an options
-    // object here is how the Authorization header crept into the bundle before.
-    expect(fetchMock.mock.calls[0]).toEqual(["/github-contributions.json"]);
+    // SEC-001: same-origin, and crucially no second argument. An options
+    // object here is how the Authorization header crept into the bundle before;
+    // the token now lives only in the api/ function.
+    expect(fetchMock.mock.calls[0]).toEqual(["/api/github-contributions"]);
   });
 
   it("collapses the heatmap into one image node named by its total", async () => {
@@ -85,7 +86,7 @@ describe("GithubContributions", () => {
     render(<GithubContributions />);
 
     await waitFor(() =>
-      expect(screen.getByRole("link", { name: "view it on GitHub" })).toHaveAttribute(
+      expect(screen.getByRole("link", { name: "See my contribution activity on GitHub" })).toHaveAttribute(
         "href",
         "https://github.com/dilsher07singh",
       ),

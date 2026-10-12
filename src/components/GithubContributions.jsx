@@ -10,11 +10,14 @@ const GithubContributions = () => {
   useEffect(() => {
     let cancelled = false;
 
-    // Written at build time by scripts/fetch-github.mjs. The GitHub token stays
-    // on the build machine so no credential ever reaches the browser.
+    // Served live by the api/github-contributions.js serverless function,
+    // which holds the GitHub token server-side and caches for an hour. This
+    // request carries no credential. `yarn dev` and `yarn preview` have no API
+    // routes, so locally the section shows its fallback; use `vercel dev` to
+    // see the live graph.
     const fetchContributions = async () => {
       try {
-        const response = await fetch("/github-contributions.json");
+        const response = await fetch("/api/github-contributions");
 
         if (!response.ok) {
           throw new Error(`Request failed with status ${response.status}`);
@@ -68,16 +71,14 @@ const GithubContributions = () => {
 
       {status === "error" && (
         <p className="mb-8 text-center text-neutral-400">
-          GitHub activity is unavailable right now —{" "}
           <a
             href={GITHUB_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="text-purple-400 transition-colors hover:text-purple-300"
           >
-            view it on GitHub
+            See my contribution activity on GitHub
           </a>
-          .
         </p>
       )}
 
