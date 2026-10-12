@@ -182,5 +182,8 @@ discuss on a whiteboard.
   brief's experience list does not include it.
 - No resume PDF on the website. The Resume call to action and the "link the
   resume PDF" items above are deliberately not implemented.
-- The GitHub Contributions section stays, fetched live at request time rather
-  than baked in at build time.
+- The GitHub Contributions section stays, fetched at build time by
+  scripts/fetch-github.mjs as before (no serverless function).
+- The AI collaborative editor (Notion-style) is shown as a clearly labelled
+  personal project. Its AI features are personal-project work, not a
+  production AI claim.

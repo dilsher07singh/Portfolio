@@ -31,6 +31,8 @@ const TARGETS = [
   { input: "dilsherSinghProfile.png", width: 576, quality: 78 },
   // The Ipseity Network card in Work.jsx, at most 200px wide.
   { input: "project-3.png", width: 400, quality: 76 },
+  // The AI collaborative editor card in Work.jsx, at most 200px wide.
+  { input: "collab-editor.png", width: 400, quality: 76 },
 ];
 
 const outputName = (input) => input.replace(/\.[^.]+$/, "") + ".webp";
