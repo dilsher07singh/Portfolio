@@ -48,32 +48,22 @@ Copy `.env.example` to `.env` and fill in:
 
 | Variable | Purpose |
 | --- | --- |
-| `GITHUB_TOKEN` | A GitHub personal access token with the `read:user` scope. Read **at request time, server-side only** by `api/github-contributions.js`. |
+| `GITHUB_TOKEN` | A GitHub personal access token with the `read:user` scope. Read **only at build time** by `scripts/fetch-github.mjs`. |
 
 The name deliberately has no `VITE_` prefix: anything prefixed that way is
 inlined into the client bundle by Vite and therefore published to every
-visitor.
+visitor. The contributions heatmap reads a static
+`public/github-contributions.json` written during the build, so no credential
+ever reaches the browser.
 
-## Live GitHub contributions
-
-The contributions heatmap is fetched live from `/api/github-contributions`, a
-Vercel serverless function in `api/`. It queries GitHub's GraphQL API with
-`GITHUB_TOKEN` and returns only the calendar JSON, so no credential reaches the
-browser. Responses are cached at the edge for an hour
-(`s-maxage=3600, stale-while-revalidate=86400`), so GitHub is called at most
-about once an hour however busy the site is. Nothing about it runs at build
-time.
-
-On Vercel, set `GITHUB_TOKEN` in the project's environment variables. If it is
-missing or GitHub fails, the endpoint returns an error with a 60-second cache
-and the section falls back to a link to the GitHub profile.
-
-`yarn dev` and `yarn preview` do not run API routes, so locally the section
-always shows that fallback. Use `vercel dev` to exercise the function.
+If `GITHUB_TOKEN` is unset the fetch step logs a warning and exits 0, leaving
+the committed `public/github-contributions.json` in place — the graph then
+shows data frozen as of that commit rather than failing the build. On Vercel,
+set `GITHUB_TOKEN` in the project's environment variables.
 
 ## Build pipeline
 
-`yarn build` runs four steps in order:
+`yarn build` runs five steps in order:
 
 1. `scripts/generate-icons.mjs` — rasterizes `public/dilsher2.svg` into the
    apple-touch-icon and the 192/512 PWA icons. Skipped when the source hash in
@@ -81,13 +71,14 @@ always shows that fallback. Use `vercel dev` to exercise the function.
 2. `scripts/optimize-images.mjs` — encodes `src/assets/originals/*` to WebP at
    roughly 2× display size into `src/assets/optimized/`. Same content-hash skip,
    recorded in `src/assets/optimized/.manifest.json`.
-3. `vite build`, then `vite build --ssr src/entry-server.jsx` — the client
+3. `scripts/fetch-github.mjs` — writes `public/github-contributions.json`.
+4. `vite build`, then `vite build --ssr src/entry-server.jsx` — the client
    bundle, then a server bundle used only by the next step.
-4. `scripts/prerender.mjs` — renders `<App />` to HTML, injects it into
+5. `scripts/prerender.mjs` — renders `<App />` to HTML, injects it into
    `dist/index.html`, and deletes the intermediate `dist/server/`.
 
-Steps 1–2 degrade gracefully: their outputs are committed, so an unusable
-`sharp` binary produces a warning, not a failed deploy. Step 4
+Steps 1–3 degrade gracefully: their outputs are committed, so a missing token
+or an unusable `sharp` binary produces a warning, not a failed deploy. Step 5
 does the opposite and fails loudly — there is no fallback for prerendering, and
 degrading quietly would silently ship an empty shell to every crawler.
 
@@ -109,7 +100,7 @@ before adding or changing any figure.
 There is no TypeScript source here. `tsconfig.json` sets `allowJs` + `checkJs`
 + `noEmit`, which turns `tsc` into a type-aware linter over the existing
 `.js`/`.jsx`/`.mjs` files, driven by JSDoc annotations and inference. It covers
-`src/`, `scripts/` and `api/`.
+`src/` and `scripts/`.
 
 ## Tests
 

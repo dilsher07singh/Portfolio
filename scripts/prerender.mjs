@@ -7,9 +7,10 @@
 // JavaScript, so before this step they saw an empty page; after it they see the
 // full document, and src/main.jsx hydrates onto it in the browser.
 //
-// Unlike optimize-images.mjs, this script FAILS THE BUILD on any problem. That
-// one degrades gracefully because a missing image binary should not block a
-// deploy, and it has committed output to fall back to. There is no fallback for prerendering: silently
+// Unlike fetch-github.mjs and optimize-images.mjs, this script FAILS THE BUILD
+// on any problem. Those two degrade gracefully because a GitHub outage or a
+// missing image binary should not block a deploy, and both have a committed
+// fallback to fall back to. There is no fallback for prerendering: silently
 // emitting the empty shell would ship exactly the SEO defect this exists to
 // fix, and it would do so invisibly.
 
