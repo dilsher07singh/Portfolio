@@ -1,9 +1,9 @@
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import About from "./components/About";
-import Technologies from "./components/Technologies";
+import Work from "./components/Work";
 import Experience from "./components/Experience";
-import Projects from "./components/Projects";
+import Skills from "./components/Skills";
 import Contact from "./components/Contact";
 import GithubContributions from "./components/GithubContributions";
 
@@ -38,9 +38,9 @@ const App = () => {
       <main id="main" tabIndex={-1} className="container mx-auto px-8">
         <Hero />
         <About />
-        <Technologies />
+        <Work />
         <Experience />
-        <Projects />
+        <Skills />
         <GithubContributions />
         <Contact />
       </main>

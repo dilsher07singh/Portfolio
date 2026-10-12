@@ -1,3 +1,7 @@
+> **Superseded (2026-10-12).** The site copy was rewritten from
+> [`portfolio_brief.md`](portfolio_brief.md), which resolves or removes every
+> finding below. Kept for history only.
+
 # Content review
 
 **Status: proposal only. No copy has been changed.**

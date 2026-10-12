@@ -1,102 +1,160 @@
-import {
-  FaLinkedin,
-  FaGithub,
-  FaWhatsapp,
-  FaInstagram,
-  FaYoutube,
-} from "react-icons/fa";
+import { FaLinkedin, FaGithub, FaEnvelope } from "react-icons/fa";
 import { GITHUB_URL } from "./site";
-import project1 from "../assets/optimized/project-1.webp";
-import project2 from "../assets/optimized/project-2.webp";
-import project3 from "../assets/optimized/project-3.webp";
+import ipseityScreenshot from "../assets/optimized/project-3.webp";
 // Emitted by scripts/optimize-images.mjs. Used for the width/height attributes
 // so the browser can reserve the right box before the image loads; generated
 // rather than hardcoded so it stays in step with the encode settings.
 import dimensions from "../assets/optimized/dimensions.json";
 
 // Re-exported so components have one import path for constants, while
-// ./site.js stays importable by the Node build scripts.
+// ./site.js stays importable by the Node build scripts and the API route.
 export { GITHUB_USERNAME, GITHUB_URL } from "./site";
 
-// The technology chip, shared by Experience.jsx and Projects.jsx. Both files
-// carried a byte-identical copy of this string with a comment asking that they
-// be kept in step; this is that single source. Tailwind scans this file, so the
+// Every fact in this file comes from docs/portfolio_brief.md. Do not add a
+// figure, employer detail or technology that is not in the brief without
+// checking with Dilsher first. The brief's voice rules apply here too: first
+// person, no contractions, numbers over adjectives.
+
+// The chip used by Skills.jsx and Work.jsx. Tailwind scans this file, so the
 // utilities are still emitted.
 export const CHIP_CLASS =
   "rounded border border-purple-900/40 bg-purple-950/40 px-2 py-1 text-sm font-medium text-purple-300";
 
-export const HERO_CONTENT = `Senior full stack engineer with 5 years building production financial infrastructure in Hong Kong. I built Dualmint's equipment-financing marketplace end to end — the TypeScript/Node.js backend, the Next.js clients, and the settlement layer that routes verified machine revenue to investors. Promoted to senior in 2025; I now lead a team of 5 and own backend and infrastructure.`;
+export const HERO = {
+  name: "Dilsher Singh",
+  title: "Senior Full Stack Engineer",
+  tagline: "I build financial systems that have to be right every time.",
+  subline:
+    "TypeScript/Node.js and React/Next.js in Hong Kong. I own a settlement pipeline that has paid investors 12,500+ times over 17 consecutive months, 100% on time.",
+  badges: [
+    "Hong Kong Permanent Resident",
+    "Team lead (5 engineers)",
+    "Hacken-audited settlement contracts (9.1/10)",
+  ],
+};
 
-export const ABOUT_TEXT = `I'm a full stack engineer based in Hong Kong, where I've spent the last five years building the systems that move real money. At Dualmint I own the backend and infrastructure behind an equipment-financing marketplace: a TypeScript/Express service layer on MongoDB and Redis, a revenue-distribution pipeline that reconciles IoT telemetry against bank data before anyone gets paid, and the on-chain settlement layer underneath it all.
-
-Most of what I do is unglamorous by design. Payouts have to land on time every month, so I build for verification and recovery first — multi-source reconciliation, crash-safe ledgers, deep test coverage, and infrastructure that behaves the same in every environment. The result is 8,700+ payout cycles across 14+ consecutive months at 100% on-time.
-
-I hold a BEng in Computer Engineering from HKUST and I'm a Hong Kong Permanent Resident. These days I spend as much time on architecture and mentoring my team of 5 as I do writing code.`;
-
+// Deliberately not the 12,500+ payout figure: the hero sub-line already leads
+// with it, and repeating it a few centimetres lower dilutes it.
 export const METRICS = [
-  { value: "5", label: "Years building production systems" },
-  { value: "1,500+", label: "Physical assets originated on-platform" },
-  { value: "8,700+", label: "Payout cycles, 100% on-time" },
-  { value: "9.1/10", label: "Hacken smart contract audit score" },
+  { value: "1,500+", label: "Financed assets on the backend I own" },
+  { value: "0", label: "Ledger-to-settlement discrepancies since April 2025" },
+  { value: "13", label: "Corrupted records repaired, zero balances changed" },
+  { value: "10", label: "Repositories where I gate merges" },
 ];
 
-export const TECHNOLOGIES = [
-  { name: "TypeScript", icon: "typescript", color: "text-blue-400" },
-  { name: "Node.js", icon: "node", color: "text-green-500" },
-  { name: "Express", icon: "express", color: "text-neutral-300" },
-  { name: "React", icon: "react", color: "text-cyan-400" },
-  { name: "Next.js", icon: "next", color: "text-neutral-200" },
-  { name: "Tailwind CSS", icon: "tailwind", color: "text-sky-400" },
-  { name: "MongoDB", icon: "mongodb", color: "text-green-500" },
-  { name: "Redis", icon: "redis", color: "text-red-500" },
-  { name: "Vitest", icon: "vitest", color: "text-yellow-400" },
-  { name: "GitHub Actions", icon: "githubactions", color: "text-blue-400" },
-  { name: "AWS EC2", icon: "aws", color: "text-orange-400" },
-  { name: "Solidity", icon: "solidity", color: "text-neutral-300" },
-  { name: "Hardhat", icon: "hardhat", color: "text-yellow-500" },
-  { name: "ethers.js", icon: "ethers", color: "text-indigo-400" },
+export const ABOUT_TEXT = `I joined Dualmint in 2022 and shipped the first production version of its equipment-financing marketplace across the Next.js client, the Node.js/Express backend and the settlement contracts, which Hacken audited at 9.1/10. Since my promotion to senior in 2025, I own the TypeScript backend for 1,500+ financed assets, lead a team of five engineers and gate merges across 10 repositories.
+
+Most of my work is about making money movement boring. Every payout is held until IoT telemetry, bank data and operator reports agree. A daily idempotent reconciliation job has found zero ledger-to-settlement discrepancies since April 2025, and event-log replay repaired 13 corrupted records without changing a single user balance.
+
+Settlement runs onchain, so I also work in Solidity, EIP-712 signing and multi-chain infrastructure, including a Chainlink CRE workflow live on Solana mainnet backed by a US$90,000 Solana Foundation grant. I also designed the AI-assisted process my team ships through: coding agents working from PRDs and scoped backlog issues, with strict TypeScript, pre-commit checks and human review on every merge.`;
+
+// "Selected work" in the brief's problem → constraints → design → result shape.
+// The brief publishes 1, 2 and 4 first; 3 (rollback deploys) and 5 (onchain
+// telemetry) are optional later additions. No internal repo names, client or
+// investor names, or anything that reveals private infrastructure.
+export const CASE_STUDIES = [
+  {
+    id: "payouts",
+    title: "Payouts that wait for agreement",
+    summary:
+      "Investor payouts are held until three independent data sources agree, and a daily replay job checks the ledger against settlement.",
+    result: "12,500+ payouts over 17 consecutive months, 100% on time",
+    problem:
+      "Investors are paid from the revenue operators earn with financed machines. Every cycle has to pay out on time, and no cycle can pay out on bad data.",
+    constraints: [
+      "Revenue is reported by three independent sources: IoT telemetry, bank data and operator reports. They can disagree.",
+      "A payout is money. Once it has gone out, it cannot be clawed back casually.",
+    ],
+    design: [
+      "Three-way reconciliation gates every payout. Nothing is paid until telemetry, bank data and operator reports agree.",
+      "A daily idempotent job replays the previous 24 hours of settlement events against the ingested records and emails an audit report.",
+      "The job sorts discrepancies into three classes and fixes only the actionable one automatically.",
+      "It never lowers a balance automatically, because that would destroy authoritative data. It logs the case and a human decides.",
+      "Corrupted records are repaired by replaying the event log, with the pre-repair state verified first.",
+    ],
+    results: [
+      "12,500+ payout cycles over 17 consecutive months, 100% on time.",
+      "Zero ledger-to-settlement discrepancies since April 2025.",
+      "13 corrupted records repaired by event-log replay, with zero balances changed.",
+    ],
+  },
+  {
+    id: "migration",
+    title: "Migrating a live platform without stopping trading",
+    summary:
+      "Staged upgrades of a revenue-carrying marketplace from Next.js 12, React 17 and web3.js to Next.js 15, React 19 and ethers v6.",
+    result: "Zero trading interruption across the whole migration",
+    problem:
+      "The marketplace carries revenue, and it was running on aging versions: Next.js 12, React 17 and web3.js.",
+    constraints: [
+      "Trading could not stop. Every step had to ship to the live platform without interrupting it.",
+      "Three major upgrades in one combined release would have been hard to reason about and hard to reverse.",
+    ],
+    design: [
+      "The work was staged as separate upgrades: Next.js 12 to 15, React 17 to 19, and web3.js to ethers v6.",
+      "Each stage shipped on its own, so a regression could only come from the one change that had just landed.",
+      "One upgrade was deliberately rolled back when shipping safety warranted it, then redone later. Waiting a cycle on an upgrade is cheap; interrupting a live market is not.",
+    ],
+    results: ["Zero trading interruption across the whole migration."],
+  },
+  {
+    id: "sdlc",
+    title: "An AI-assisted SDLC a team actually uses",
+    summary:
+      "Coding agents work from PRDs and scoped backlog issues. Strict TypeScript, lint, pre-commit checks and human review gate every merge.",
+    result: "Adopted by all 5 engineers across 10 repositories",
+    problem:
+      "Coding agents can produce a lot of code quickly. The goal was to get that speed without lowering the quality bar on systems that move money.",
+    constraints: [
+      "It had to work for the whole team, not for one person.",
+      "It could not weaken review. Every change still has to be understood by a human before it merges.",
+    ],
+    design: [
+      "Work starts as a PRD and is broken into scoped backlog issues, so an agent always has a clear, bounded task.",
+      "Each repository carries its own agent scaffolding, AGENTS.md and agent skills, describing how that codebase is built and checked.",
+      "Agent-generated code passes the same gates as any other code: strict TypeScript, lint and pre-commit checks.",
+      "A human reviews every merge.",
+      "This is an engineering process, not an AI product.",
+    ],
+    results: [
+      "Adopted by all 5 engineers across 10 repositories.",
+      "Merge gatekeeper on 435 of 592 client merges.",
+    ],
+  },
 ];
+
+// Kept on the site by decision (see the end of docs/portfolio_brief.md).
+export const EARLIER_PROJECT = {
+  title: "Ipseity Network",
+  image: ipseityScreenshot,
+  imageSize: dimensions["project-3.webp"],
+  description:
+    "A decentralized platform where individuals keep full ownership of their personal data and share it with companies on their own terms, backed by homomorphic encryption so analysis never requires decryption. I built the web and React Native clients and the REST APIs behind them.",
+  technologies: ["React", "React Native", "JavaScript", "REST APIs"],
+  link: "https://www.ipseity.network/",
+};
 
 export const EXPERIENCES = [
   {
     year: "Jan 2025 - Present",
     role: "Senior Full Stack Engineer",
     company: "Dualmint",
+    location: "Hong Kong",
     description: [
-      "Own the TypeScript/Express backend (MongoDB, Redis/BullMQ) behind an equipment-financing marketplace of 1,500+ originated physical assets, architected so new networks and asset classes launch as configuration rather than code.",
-      "Built the revenue-distribution pipeline: a 2-of-3 verification model reconciling IoT telemetry, bank transaction data and operator reports within a ±10% tolerance before any payout clears — 8,700+ payout cycles across 14+ consecutive months at 100% on-time.",
-      "Designed provider-agnostic on-chain event ingestion spanning 8 webhook endpoints, three data providers and 5 chains, with a 4-tier receipt-fetch fallback so no settlement event is silently dropped.",
-      "Built the underwriting engine behind the vault backend — a four-pillar model scored across 20 features, covered by a 156-test suite at 94% statement coverage.",
-      "Shipped an IoT device-provisioning pipeline on a crash-safe append-only ledger; a single 32.6-hour run registered 205 devices with zero collisions.",
-      "Standardized infrastructure across 7 repositories (agent-assisted code workflows, pre-commit hooks, lint-staged, strict TypeScript) and migrated the platform off serverless onto AWS EC2 with PM2 and health-checked GitHub Actions across 3 environments.",
-      "Lead a team of 5, owning backend and infrastructure direction.",
-    ],
-    technologies: [
-      "TypeScript",
-      "Node.js",
-      "MongoDB",
-      "Redis",
-      "AWS EC2",
-      "GitHub Actions",
+      "Own the TypeScript backend for 1,500+ financed assets and the settlement pipeline that pays investors.",
+      "Lead a team of five engineers and gate merges across 10 repositories.",
+      "Designed the AI-assisted process the team ships through, with human review on every merge.",
+      "Onchain work includes a Chainlink CRE workflow live on Solana mainnet, backed by a US$90,000 Solana Foundation grant.",
     ],
   },
   {
-    year: "Sep 2021 - Jan 2025",
+    year: "Jun 2022 - Jan 2025",
     role: "Full Stack Engineer",
     company: "Dualmint",
+    location: "Hong Kong",
     description: [
-      "Built the Node.js/Express backend and MongoDB data layer with a 497-test suite reaching 100% coverage on data models, alongside the Next.js/React client.",
-      "Wrote the Solidity settlement contracts, audited 9.1/10 by Hacken.",
-      "Authored a cryptographic order-signing SDK on EIP-712 typed data with byte-for-byte serialization parity between client and contract, supporting three asset standards and royalty splits across 8 networks.",
-      "Unified social login, external wallets and an embedded mini-app behind a single auth layer with KYC and card-payment checkout.",
-    ],
-    technologies: [
-      "Solidity",
-      "Node.js",
-      "Next.js",
-      "MongoDB",
-      "ethers.js",
-      "Hardhat",
+      "Shipped the first production version of the equipment-financing marketplace across the Next.js client, the Node.js/Express backend and the settlement contracts.",
+      "The settlement contracts were audited at 9.1/10 by Hacken.",
     ],
   },
   {
@@ -107,100 +165,109 @@ export const EXPERIENCES = [
       "Built React and React Native interfaces for a data-analysis platform built on homomorphic encryption, letting companies compute over user data without ever decrypting it.",
       "Designed and implemented the RESTful APIs backing both the web and mobile clients.",
     ],
-    technologies: ["React", "React Native", "JavaScript", "REST APIs"],
   },
 ];
 
-export const PROJECTS = [
+export const EDUCATION = {
+  year: "2018 - 2022",
+  degree: "BEng Computer Engineering",
+  school: "Hong Kong University of Science and Technology",
+};
+
+export const SKILLS = [
   {
-    title: "Dualmint Marketplace",
-    image: project1,
-    imageSize: dimensions["project-1.webp"],
-    description:
-      "An equipment-financing marketplace connecting investors to revenue-generating physical machines. I built the TypeScript/Express backend, the Next.js client and the settlement layer that routes verified machine revenue to investors — including the Solidity contracts audited 9.1/10 by Hacken.",
-    technologies: [
+    group: "Backend",
+    items: [
       "TypeScript",
       "Node.js",
-      "Next.js",
+      "Express",
+      "REST APIs",
+      "PostgreSQL",
       "MongoDB",
-      "Solidity",
-      "AWS",
+      "Webhooks",
+      "Redis/BullMQ",
+      "Vitest",
     ],
-    link: "https://explore.dualmint.com/",
   },
   {
-    title: "Ipseity Network",
-    image: project3,
-    imageSize: dimensions["project-3.webp"],
-    description:
-      "A decentralized platform where individuals keep full ownership of their personal data and share it with companies on their own terms, backed by homomorphic encryption so analysis never requires decryption. Built the web and React Native clients and the REST APIs behind them.",
-    technologies: ["React", "React Native", "JavaScript", "REST APIs"],
-    link: "https://www.ipseity.network/",
-  },
-  {
-    title: "Real-Time Collaborative Editor",
-    image: project2,
-    imageSize: dimensions["project-2.webp"],
-    description:
-      "A Notion-style collaborative document editor with live multi-user presence, AI-assisted document translation and summarization, and edge-deployed serverless functions.",
-    technologies: [
+    group: "Frontend",
+    items: [
+      "React",
       "Next.js",
-      "Cloudflare Workers",
-      "Clerk",
-      "Firestore",
-      "Liveblocks",
+      "Tailwind CSS",
+      "TanStack Query",
+      "Zod",
+      "Recharts",
     ],
-    link: "https://notion-clone-youtube-six.vercel.app/",
+  },
+  {
+    group: "Infra",
+    items: [
+      "AWS (EC2, SES, CloudWatch)",
+      "PM2",
+      "Docker",
+      "GitHub Actions",
+      "Sentry",
+      "Datadog",
+    ],
+  },
+  {
+    group: "Onchain",
+    items: [
+      "Solidity",
+      "Hardhat",
+      "Foundry",
+      "OpenZeppelin",
+      "ethers.js",
+      "viem",
+      "EIP-712",
+      "Chainlink CRE",
+      "Solana Anchor",
+    ],
+  },
+  {
+    group: "Engineering process",
+    items: ["Claude Code", "Agentic coding with human review", "TDD"],
   },
 ];
 
 export const CONTACT = {
   address: "Hong Kong SAR",
   email: "dilsher07singh@gmail.com",
-  whatsapp: "https://wa.me/919740071441",
 };
 
-// Consumed by Navbar.jsx (all five) and Contact.jsx (the subset it names).
-// `Icon` is a component reference, not an element, so this stays a plain .js
-// module. Each entry's label is used for both aria-label and title.
+// The brief's calls to action, minus the resume PDF (deliberately not on the
+// site). Consumed by Navbar.jsx, Hero.jsx and Contact.jsx. `Icon` is a
+// component reference, not an element, so this stays a plain .js module. Each
+// entry's label is used for both aria-label and title.
 export const SOCIALS = [
+  {
+    id: "email",
+    href: `mailto:${CONTACT.email}`,
+    text: "Email",
+    label: "Email Dilsher Singh",
+    Icon: FaEnvelope,
+  },
   {
     id: "linkedin",
     href: "https://www.linkedin.com/in/dilsher07singh/",
+    text: "LinkedIn",
     label: "Dilsher Singh on LinkedIn",
     Icon: FaLinkedin,
   },
   {
     id: "github",
     href: GITHUB_URL,
+    text: "GitHub",
     label: "Dilsher Singh on GitHub",
     Icon: FaGithub,
-  },
-  {
-    id: "whatsapp",
-    href: CONTACT.whatsapp,
-    label: "Message Dilsher Singh on WhatsApp",
-    Icon: FaWhatsapp,
-  },
-  {
-    id: "instagram",
-    href: "https://www.instagram.com/dilsher.07/",
-    label: "Dilsher Singh on Instagram",
-    Icon: FaInstagram,
-  },
-  {
-    id: "youtube",
-    href: "https://www.youtube.com/@dilsher07singh",
-    label: "Dilsher Singh on YouTube",
-    Icon: FaYoutube,
   },
 ];
 
 export const NAV_LINKS = [
   { label: "About", href: "#about" },
-  // Label matches the section heading and the #technologies anchor it targets.
-  { label: "Technologies", href: "#technologies" },
+  { label: "Work", href: "#work" },
   { label: "Experience", href: "#experience" },
-  { label: "Projects", href: "#projects" },
+  { label: "Skills", href: "#skills" },
   { label: "Contact", href: "#contact" },
 ];
