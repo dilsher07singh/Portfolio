@@ -1,7 +1,12 @@
 /* eslint-disable react/prop-types --
    CaseSection and BulletList are file-private helpers with one caller each;
    see Reveal.jsx for why this repo does not take on the prop-types package. */
-import { CASE_STUDIES, CHIP_CLASS, EARLIER_PROJECT } from "../constants";
+import {
+  CASE_STUDIES,
+  CHIP_CLASS,
+  EARLIER_PROJECT,
+  PERSONAL_PROJECT,
+} from "../constants";
 import Reveal from "./Reveal";
 import { FaArrowRight, FaChevronDown } from "react-icons/fa";
 
@@ -21,6 +26,72 @@ const BulletList = ({ items }) => (
       <li key={item}>{item}</li>
     ))}
   </ul>
+);
+
+const LINK_CLASS =
+  "inline-flex items-center gap-2 font-semibold text-purple-400 transition-colors hover:text-purple-300";
+
+// A card for a project outside the case studies. The links are separate rather
+// than wrapping the card, because a project with a video needs two and links
+// cannot nest. `id` keeps the aria-labelledby targets unique across cards.
+const ProjectCard = ({ id, label, project }) => (
+  <Reveal from="below">
+    <h3 className="mb-4 mt-12 text-center text-sm uppercase tracking-widest text-neutral-400">
+      {label}
+    </h3>
+    <div className="flex flex-col gap-6 rounded-xl border border-neutral-700 bg-neutral-900/40 p-6 transition-colors hover:border-purple-600/60 sm:flex-row">
+      <img
+        src={project.image}
+        width={project.imageSize.width}
+        height={project.imageSize.height}
+        loading="lazy"
+        alt={`Screenshot of ${project.title}`}
+        className="h-auto w-full max-w-[200px] self-start rounded-lg object-cover"
+      />
+      <div>
+        <p id={`${id}-title`} className="mb-2 text-xl font-semibold text-neutral-100">
+          {project.title}
+        </p>
+        <p className="mb-4 leading-relaxed text-neutral-300">
+          {project.description}
+        </p>
+        <div className="mb-4 flex flex-wrap gap-2">
+          {project.technologies.map((tech) => (
+            <span key={tech} className={CHIP_CLASS}>
+              {tech}
+            </span>
+          ))}
+        </div>
+        <span id={`${id}-new-tab`} className="sr-only">
+          (opens in a new tab)
+        </span>
+        <div className="flex flex-wrap gap-6">
+          <a
+            href={project.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-labelledby={`${id}-title ${id}-new-tab`}
+            className={LINK_CLASS}
+          >
+            Visit the site
+            <FaArrowRight aria-hidden="true" />
+          </a>
+          {project.video && (
+            <a
+              href={project.video}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-labelledby={`${id}-video ${id}-title ${id}-new-tab`}
+              className={LINK_CLASS}
+            >
+              <span id={`${id}-video`}>Watch the video</span>
+              <FaArrowRight aria-hidden="true" />
+            </a>
+          )}
+        </div>
+      </div>
+    </div>
+  </Reveal>
 );
 
 const Work = () => {
@@ -89,53 +160,19 @@ const Work = () => {
           </Reveal>
         ))}
 
+        {/* Labelled as a personal project so its AI features read as such. */}
+        <ProjectCard
+          id="personal-project"
+          label="Personal project"
+          project={PERSONAL_PROJECT}
+        />
+
         {/* Earlier work: kept on the site by decision, see the brief. */}
-        <Reveal from="below">
-          <h3 className="mb-4 mt-12 text-center text-sm uppercase tracking-widest text-neutral-400">
-            Earlier work
-          </h3>
-          <a
-            href={EARLIER_PROJECT.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-labelledby="earlier-project-title earlier-project-new-tab"
-            className="flex flex-col gap-6 rounded-xl border border-neutral-700 bg-neutral-900/40 p-6 transition-colors hover:border-purple-600/60 sm:flex-row"
-          >
-            <img
-              src={EARLIER_PROJECT.image}
-              width={EARLIER_PROJECT.imageSize.width}
-              height={EARLIER_PROJECT.imageSize.height}
-              loading="lazy"
-              alt={`Screenshot of ${EARLIER_PROJECT.title}`}
-              className="h-auto w-full max-w-[200px] self-start rounded-lg object-cover"
-            />
-            <div>
-              <p
-                id="earlier-project-title"
-                className="mb-2 text-xl font-semibold text-neutral-100"
-              >
-                {EARLIER_PROJECT.title}
-              </p>
-              <p className="mb-4 leading-relaxed text-neutral-300">
-                {EARLIER_PROJECT.description}
-              </p>
-              <div className="mb-4 flex flex-wrap gap-2">
-                {EARLIER_PROJECT.technologies.map((tech) => (
-                  <span key={tech} className={CHIP_CLASS}>
-                    {tech}
-                  </span>
-                ))}
-              </div>
-              <span className="inline-flex items-center gap-2 font-semibold text-purple-400">
-                Visit the site
-                <span id="earlier-project-new-tab" className="sr-only">
-                  (opens in a new tab)
-                </span>
-                <FaArrowRight aria-hidden="true" />
-              </span>
-            </div>
-          </a>
-        </Reveal>
+        <ProjectCard
+          id="earlier-project"
+          label="Earlier work"
+          project={EARLIER_PROJECT}
+        />
       </div>
     </section>
   );

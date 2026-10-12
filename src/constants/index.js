@@ -1,6 +1,7 @@
 import { FaLinkedin, FaGithub, FaEnvelope } from "react-icons/fa";
 import { GITHUB_URL } from "./site";
 import ipseityScreenshot from "../assets/optimized/project-3.webp";
+import collabEditorScreenshot from "../assets/optimized/collab-editor.webp";
 // Emitted by scripts/optimize-images.mjs. Used for the width/height attributes
 // so the browser can reserve the right box before the image loads; generated
 // rather than hardcoded so it stays in step with the encode settings.
@@ -122,6 +123,30 @@ export const CASE_STUDIES = [
     ],
   },
 ];
+
+// Personal project, labelled as such on the page: its AI features are not a
+// production claim (see "Never claim" and the decisions at the end of
+// docs/portfolio_brief.md).
+export const PERSONAL_PROJECT = {
+  title: "AI collaborative document editor",
+  image: collabEditorScreenshot,
+  imageSize: dimensions["collab-editor.webp"],
+  description:
+    "A Notion-style editor where several people edit the same document in real time. Edits merge through Yjs CRDTs synced over Liveblocks, with live cursors and presence, and documents are shared by invite with owner and editor roles. A Cloudflare Worker adds the AI features: ask questions about a document with OpenAI, or summarize it and translate the summary with Workers AI models.",
+  technologies: [
+    "Next.js",
+    "TypeScript",
+    "Liveblocks",
+    "Yjs",
+    "Cloudflare Workers AI",
+    "OpenAI API",
+    "Firestore",
+    "Clerk",
+  ],
+  link: "https://notion-clone-youtube-six.vercel.app/",
+  // A walkthrough on Dilsher's own YouTube channel.
+  video: "https://www.youtube.com/watch?v=z6M8y0SlMig",
+};
 
 // Kept on the site by decision (see the end of docs/portfolio_brief.md).
 export const EARLIER_PROJECT = {
