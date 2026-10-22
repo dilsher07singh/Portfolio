@@ -40,13 +40,17 @@ not identity.
   (https://github.com/dilsher07singh), Resume (PDF download, filename
   Dilsher_Singh_Resume.pdf; Dilsher supplies the file)
 
-## About (3 short paragraphs)
+## About (4 short paragraphs)
 
-I joined Dualmint in 2022 and shipped the first production version of its
-equipment-financing marketplace across the Next.js client, the Node.js/Express
-backend and the settlement contracts, which Hacken audited at 9.1/10. Since my
-promotion to senior in 2025, I own the TypeScript backend for 1,500+ financed
-assets, lead a team of five engineers and gate merges across 10 repositories.
+I have built the same equipment-financing marketplace since 2022: the Next.js
+client, the Node.js/Express backend and the settlement contracts, which Hacken
+audited at 9.1/10. I joined Ipseity Network as an intern in 2021 and as a full
+stack engineer in 2022.
+
+When Dualmint was formed in 2025 from the merger of five companies, I was
+assigned to lead its platform as Senior Full Stack Engineer. Today I own the
+TypeScript backend for 1,500+ financed assets, lead a team of five engineers and
+gate merges across 10 repositories.
 
 Most of my work is about making money movement boring. Every payout is held
 until IoT telemetry, bank data and operator reports agree. A daily idempotent
@@ -59,12 +63,16 @@ multi-chain infrastructure, including a Chainlink CRE workflow live on Solana
 mainnet backed by a US$90,000 Solana Foundation grant. I also designed the
 AI-assisted process my team ships through: coding agents working from PRDs and
 scoped backlog issues, with strict TypeScript, pre-commit checks and human
-review on every merge.
+review on every merge. Earlier, at Ipseity Network, I worked on
+privacy-preserving data products: a consent-based data marketplace and a React
+Native identity wallet.
 
 ## Experience (short)
 
 - Senior Full Stack Engineer, Dualmint, Hong Kong, Jan 2025 – Present
-- Full Stack Engineer, Dualmint, Hong Kong, Jun 2022 – Jan 2025
+  (Dualmint was formed in 2025 from a merger of five companies)
+- Full Stack Engineer, Ipseity Network, Hong Kong, Jun 2022 – Jan 2025
+- Software Engineer Intern, Ipseity Network, Apr 2021 – Sep 2021
 - BEng Computer Engineering, Hong Kong University of Science and Technology,
   2018 – 2022
 
@@ -105,7 +113,8 @@ discuss on a whiteboard.
 - Design: staged upgrades Next.js 12 → 15, React 17 → 19, web3.js → ethers v6;
   one upgrade deliberately rolled back when shipping safety warranted it, then
   redone later.
-- Result: zero trading interruption across the whole migration.
+- Result: Next.js 12 → 15, React 17 → 19 and web3.js → ethers v6 on a live,
+  revenue-carrying platform.
 
 ### 3. Deploys that roll themselves back (platform/infra)
 
@@ -139,12 +148,12 @@ discuss on a whiteboard.
 ## Skills section
 
 - Backend: TypeScript, Node.js, Express, REST APIs, PostgreSQL, MongoDB,
-  Webhooks, Redis/BullMQ, Vitest
-- Frontend: React, Next.js, Tailwind CSS, TanStack Query, Zod, Recharts
-- Infra: AWS (EC2, SES, CloudWatch), PM2, Docker, GitHub Actions, Sentry,
-  Datadog
+  MySQL, Stripe, Webhooks, Redis/BullMQ, Vitest
+- Frontend: React, Next.js, React Native (Expo), Tailwind CSS, TanStack Query,
+  Zod, Recharts
+- Infra: AWS (EC2, SES, CloudWatch), Docker, GitHub Actions, Sentry, Datadog
 - Onchain: Solidity, Hardhat, Foundry, OpenZeppelin, ethers.js, viem, EIP-712,
-  Chainlink CRE, Solana Anchor
+  Chainlink CRE, Solana Anchor, IPFS, libsodium/NaCl
 - Engineering process: Claude Code, agentic coding with human review, TDD
 
 ## Never claim (binding)
@@ -178,12 +187,15 @@ discuss on a whiteboard.
 
 ## Decisions since the brief (2026-10-12)
 
-- Ipseity Network stays on the site (internship and project), even though the
-  brief's experience list does not include it.
+- Ipseity Network was the employer of record from 2021 until Jan 2025
+  (internship, then full stack engineer). Dualmint did not exist before 2025;
+  nothing on the site may place Dualmint before 2025. Ipseity Network also stays
+  as an earlier-work project card. Do not describe its encryption beyond what
+  the site says (an earlier description was inaccurate).
 - No resume PDF on the website. The Resume call to action and the "link the
   resume PDF" items above are deliberately not implemented.
 - The GitHub Contributions section stays, fetched at build time by
   scripts/fetch-github.mjs as before (no serverless function).
 - The AI collaborative editor (Notion-style) is shown as a clearly labelled
-  personal project. Its AI features are personal-project work, not a
-  production AI claim.
+  learning project, built following a tutorial. Its AI features are
+  learning-project work, not a production AI claim.

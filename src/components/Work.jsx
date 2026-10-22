@@ -160,10 +160,10 @@ const Work = () => {
           </Reveal>
         ))}
 
-        {/* Labelled as a personal project so its AI features read as such. */}
+        {/* Labelled as a learning project so its AI features read as such. */}
         <ProjectCard
           id="personal-project"
-          label="Personal project"
+          label="Learning project"
           project={PERSONAL_PROJECT}
         />
 

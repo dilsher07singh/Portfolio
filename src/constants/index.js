@@ -43,11 +43,13 @@ export const METRICS = [
   { value: "10", label: "Repositories where I gate merges" },
 ];
 
-export const ABOUT_TEXT = `I joined Dualmint in 2022 and shipped the first production version of its equipment-financing marketplace across the Next.js client, the Node.js/Express backend and the settlement contracts, which Hacken audited at 9.1/10. Since my promotion to senior in 2025, I own the TypeScript backend for 1,500+ financed assets, lead a team of five engineers and gate merges across 10 repositories.
+export const ABOUT_TEXT = `I have built the same equipment-financing marketplace since 2022: the Next.js client, the Node.js/Express backend and the settlement contracts, which Hacken audited at 9.1/10. I joined Ipseity Network as an intern in 2021 and as a full stack engineer in 2022.
+
+When Dualmint was formed in 2025 from the merger of five companies, I was assigned to lead its platform as Senior Full Stack Engineer. Today I own the TypeScript backend for 1,500+ financed assets, lead a team of five engineers and gate merges across 10 repositories.
 
 Most of my work is about making money movement boring. Every payout is held until IoT telemetry, bank data and operator reports agree. A daily idempotent reconciliation job has found zero ledger-to-settlement discrepancies since April 2025, and event-log replay repaired 13 corrupted records without changing a single user balance.
 
-Settlement runs onchain, so I also work in Solidity, EIP-712 signing and multi-chain infrastructure, including a Chainlink CRE workflow live on Solana mainnet backed by a US$90,000 Solana Foundation grant. I also designed the AI-assisted process my team ships through: coding agents working from PRDs and scoped backlog issues, with strict TypeScript, pre-commit checks and human review on every merge.`;
+Settlement runs onchain, so I also work in Solidity, EIP-712 signing and multi-chain infrastructure, including a Chainlink CRE workflow live on Solana mainnet backed by a US$90,000 Solana Foundation grant. I also designed the AI-assisted process my team ships through: coding agents working from PRDs and scoped backlog issues, with strict TypeScript, pre-commit checks and human review on every merge. Earlier, at Ipseity Network, I worked on privacy-preserving data products: a consent-based data marketplace and a React Native identity wallet.`;
 
 // "Selected work" in the brief's problem → constraints → design → result shape.
 // The brief publishes 1, 2 and 4 first; 3 (rollback deploys) and 5 (onchain
@@ -84,7 +86,8 @@ export const CASE_STUDIES = [
     title: "Migrating a live platform without stopping trading",
     summary:
       "Staged upgrades of a revenue-carrying marketplace from Next.js 12, React 17 and web3.js to Next.js 15, React 19 and ethers v6.",
-    result: "Zero trading interruption across the whole migration",
+    result:
+      "Next.js 12 → 15, React 17 → 19 and web3.js → ethers v6 on a live, revenue-carrying platform",
     problem:
       "The marketplace carries revenue, and it was running on aging versions: Next.js 12, React 17 and web3.js.",
     constraints: [
@@ -96,7 +99,9 @@ export const CASE_STUDIES = [
       "Each stage shipped on its own, so a regression could only come from the one change that had just landed.",
       "One upgrade was deliberately rolled back when shipping safety warranted it, then redone later. Waiting a cycle on an upgrade is cheap; interrupting a live market is not.",
     ],
-    results: ["Zero trading interruption across the whole migration."],
+    results: [
+      "Next.js 12 → 15, React 17 → 19 and web3.js → ethers v6 on a live, revenue-carrying platform.",
+    ],
   },
   {
     id: "sdlc",
@@ -124,7 +129,7 @@ export const CASE_STUDIES = [
   },
 ];
 
-// Personal project, labelled as such on the page: its AI features are not a
+// Learning project, labelled as such on the page: its AI features are not a
 // production claim (see "Never claim" and the decisions at the end of
 // docs/portfolio_brief.md).
 export const PERSONAL_PROJECT = {
@@ -132,7 +137,7 @@ export const PERSONAL_PROJECT = {
   image: collabEditorScreenshot,
   imageSize: dimensions["collab-editor.webp"],
   description:
-    "A Notion-style editor where several people edit the same document in real time. Edits merge through Yjs CRDTs synced over Liveblocks, with live cursors and presence, and documents are shared by invite with owner and editor roles. A Cloudflare Worker adds the AI features: ask questions about a document with OpenAI, or summarize it and translate the summary with Workers AI models.",
+    "A Notion-style editor where several people edit the same document in real time. Edits merge through Yjs CRDTs synced over Liveblocks, with live cursors and presence, and documents are shared by invite with owner and editor roles. A Cloudflare Worker adds the AI features: ask questions about a document with OpenAI, or summarize it and translate the summary with Workers AI models. Built following a tutorial.",
   technologies: [
     "Next.js",
     "TypeScript",
@@ -154,8 +159,14 @@ export const EARLIER_PROJECT = {
   image: ipseityScreenshot,
   imageSize: dimensions["project-3.webp"],
   description:
-    "A decentralized platform where individuals keep full ownership of their personal data and share it with companies on their own terms, backed by homomorphic encryption so analysis never requires decryption. I built the web and React Native clients and the REST APIs behind them.",
-  technologies: ["React", "React Native", "JavaScript", "REST APIs"],
+    "A consent-based data marketplace: businesses run surveys and data collections, and people choose what to share and are rewarded for it. I built the reward escrow contracts, the inWallet identity wallet in React Native, and pay-per-use billing for the Virtual Clean Room.",
+  technologies: [
+    "React",
+    "React Native (Expo)",
+    "Node.js",
+    "Solidity",
+    "libsodium",
+  ],
   link: "https://www.ipseity.network/",
 };
 
@@ -166,6 +177,7 @@ export const EXPERIENCES = [
     company: "Dualmint",
     location: "Hong Kong",
     description: [
+      "Shipped the first production version of the marketplace across client, backend and settlement contracts, audited at 9.1/10 by Hacken.",
       "Own the TypeScript backend for 1,500+ financed assets and the settlement pipeline that pays investors.",
       "Lead a team of five engineers and gate merges across 10 repositories.",
       "Designed the AI-assisted process the team ships through, with human review on every merge.",
@@ -175,21 +187,20 @@ export const EXPERIENCES = [
   {
     year: "Jun 2022 - Jan 2025",
     role: "Full Stack Engineer",
-    company: "Dualmint",
+    company: "Ipseity Network",
     location: "Hong Kong",
     description: [
-      "Shipped the first production version of the equipment-financing marketplace across the Next.js client, the Node.js/Express backend and the settlement contracts.",
-      "The settlement contracts were audited at 9.1/10 by Hacken.",
+      "Built the reward escrow: a platform token plus a clone factory that creates one escrow contract per data request to hold its reward pool.",
+      "Built the inWallet identity wallet in Expo / React Native for iOS, Android and web, with passwordless login and onchain rewards.",
+      "Upgraded the wallet from Expo SDK 43 to 47 (React Native 0.64 → 0.70, React 17 → 18) by stepping through SDK 45 after direct jumps failed. Merged two branches that had diverged for nine months.",
+      "Added pay-per-use billing to the Virtual Clean Room, where companies find overlaps between their encrypted datasets without sharing raw data.",
     ],
   },
   {
     year: "Apr 2021 - Sep 2021",
     role: "Software Engineer Intern",
     company: "Ipseity Network",
-    description: [
-      "Built React and React Native interfaces for a data-analysis platform built on homomorphic encryption, letting companies compute over user data without ever decrypting it.",
-      "Designed and implemented the RESTful APIs backing both the web and mobile clients.",
-    ],
+    description: [],
   },
 ];
 
@@ -209,6 +220,8 @@ export const SKILLS = [
       "REST APIs",
       "PostgreSQL",
       "MongoDB",
+      "MySQL",
+      "Stripe",
       "Webhooks",
       "Redis/BullMQ",
       "Vitest",
@@ -219,6 +232,7 @@ export const SKILLS = [
     items: [
       "React",
       "Next.js",
+      "React Native (Expo)",
       "Tailwind CSS",
       "TanStack Query",
       "Zod",
@@ -229,7 +243,6 @@ export const SKILLS = [
     group: "Infra",
     items: [
       "AWS (EC2, SES, CloudWatch)",
-      "PM2",
       "Docker",
       "GitHub Actions",
       "Sentry",
@@ -248,6 +261,8 @@ export const SKILLS = [
       "EIP-712",
       "Chainlink CRE",
       "Solana Anchor",
+      "IPFS",
+      "libsodium/NaCl",
     ],
   },
   {
