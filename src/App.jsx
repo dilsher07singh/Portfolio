@@ -9,7 +9,12 @@ import GithubContributions from "./components/GithubContributions";
 
 const App = () => {
   return (
-    <div className="overflow-x-hidden text-neutral-300 antialiased selection:bg-purple-300 selection:text-purple-900 min-h-screen">
+    // overflow-x clip, not hidden: both stop the reveal offsets from causing
+    // a sideways scroll, but hidden turns this div into a scroll container,
+    // and a sticky element sticks to its nearest scroll container. This div
+    // never scrolls, so under hidden the navbar's lg:sticky never stuck.
+    // Browsers without overflow: clip (Safari before 16) keep hidden.
+    <div className="overflow-x-hidden supports-[overflow:clip]:overflow-x-clip text-neutral-300 antialiased selection:bg-purple-300 selection:text-purple-900 min-h-screen">
       <div className="fixed top-0 left-0 h-full w-full z-[-1] bg-neutral-950 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"></div>
       {/*
         First focusable element in the DOM, so one Tab from page load offers it.
