@@ -158,15 +158,26 @@ discuss on a whiteboard.
 
 ## Never claim (binding)
 
-- Any production LLM or AI product feature. The AI credential is the AI-assisted
-  SDLC.
-- LangChain, LangGraph, RAG or Vercel AI SDK as production work. They may appear
-  only on a clearly labelled personal project once that repo is public.
-- Production Python, C++ or Kubernetes.
-- TypeScript on the marketplace client (the client is JavaScript).
-- "2-of-3" reconciliation; settlement reconciliation is three-way.
-- CI-gated tests (quality gates run in pre-commit hooks; the only CI gate is a
+Updated 2026-10-30. This replaces the earlier list, which forbade claiming any
+production LLM feature; the LLM extraction pipeline shipped in October 2026.
+
+- "100%" accuracy for the LLM feature. The accuracy figure is 99%.
+- RAG, agents or MCP for the LLM extraction feature.
+- That the LLM runs "in our backend". The model is called from a Python
+  pipeline; the TypeScript backend only receives verified, confirmed terms and
+  runs the payout check.
+- A hosted Python service. The pipeline runs as a CLI that posts to the
+  backend's authenticated ingest API.
+- Any override rate, discrepancy count or number of payout cycles checked by
+  the LLM feature beyond "the first payouts it checked all matched".
+- "Every PR reviewed" or "human review on every merge". Use "human review
+  gating merges".
+- Any second AI feature or chatbot. Do not mention one.
+- CI-gated merges (quality gates run in pre-commit hooks; the only CI gate is a
   static-analysis gate on the vault).
+- "2-of-3" reconciliation; settlement reconciliation is three-way.
+- TypeScript on the marketplace client (the client is JavaScript).
+- Production C++ or Kubernetes.
 - An audit of the token or exchange contracts; ERC-2981 royalties.
 
 ## Never publish
@@ -174,7 +185,10 @@ discuss on a whiteboard.
 - Salary, notice period, languages, or job-search status. No "open to work"
   banner.
 - Security incident details (admin-key compromise, outage timelines), internal
-  repo names, investor names, underwriting weights or formulas.
+  repo or service names, infrastructure details, investor or client names,
+  underwriting weights or formulas.
+- From the LLM extraction work: template identifiers, document contents, asset
+  terms or yield values.
 - Anything from the private job-search files other than this brief.
 
 ## Technical checklist
@@ -199,3 +213,17 @@ discuss on a whiteboard.
 - The AI collaborative editor (Notion-style) is shown as a clearly labelled
   learning project, built following a tutorial. Its AI features are
   learning-project work, not a production AI claim.
+
+## Decisions (2026-10-30)
+
+- The site now leads with the production LLM extraction pipeline, with the
+  financial-systems work as proof of rigour. The hero, stat tiles, About,
+  Selected work, the Dualmint experience bullets, Skills and page metadata were
+  rewritten from Dilsher's LLM-first brief of this date. Where the Hero, About,
+  Selected work and Skills sections above differ, the live copy in
+  src/constants/index.js is current.
+- The AI collaborative editor learning project is removed from the site.
+- LangChain, LangGraph, RAG and Vercel AI SDK appear in the "AI / LLM" skills
+  group only. They are never described as part of the extraction feature.
+- Still no resume PDF on the site; Dilsher_Singh_Resume.pdf does not exist in
+  public/.

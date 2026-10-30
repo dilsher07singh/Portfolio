@@ -3,12 +3,7 @@ import { describe, expect, it } from "vitest";
 import Hero from "../components/Hero.jsx";
 import Navbar from "../components/Navbar.jsx";
 import Work from "../components/Work.jsx";
-import {
-  CASE_STUDIES,
-  EARLIER_PROJECT,
-  METRICS,
-  PERSONAL_PROJECT,
-} from "../constants";
+import { CASE_STUDIES, EARLIER_PROJECT, METRICS } from "../constants";
 
 describe("Navbar", () => {
   it("names the logo link once, from the anchor rather than the image", () => {
@@ -78,21 +73,6 @@ describe("Selected work", () => {
     expect(link).toHaveAttribute("href", EARLIER_PROJECT.link);
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
-  });
-
-  it("names the personal project's site and video links apart", () => {
-    render(<Work />);
-
-    const site = screen.getByRole("link", {
-      name: `${PERSONAL_PROJECT.title} (opens in a new tab)`,
-    });
-    expect(site).toHaveAttribute("href", PERSONAL_PROJECT.link);
-
-    const video = screen.getByRole("link", {
-      name: `Watch the video ${PERSONAL_PROJECT.title} (opens in a new tab)`,
-    });
-    expect(video).toHaveAttribute("href", PERSONAL_PROJECT.video);
-    expect(video).toHaveAttribute("rel", "noopener noreferrer");
   });
 
   it("does not repeat a chip's visible text in a title attribute", () => {

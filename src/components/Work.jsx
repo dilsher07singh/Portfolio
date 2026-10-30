@@ -1,24 +1,9 @@
 /* eslint-disable react/prop-types --
-   CaseSection and BulletList are file-private helpers with one caller each;
+   CaseSection, BulletList and ProjectCard are file-private helpers;
    see Reveal.jsx for why this repo does not take on the prop-types package. */
-import {
-  CASE_STUDIES,
-  CHIP_CLASS,
-  EARLIER_PROJECT,
-  PERSONAL_PROJECT,
-} from "../constants";
+import { CASE_STUDIES, CHIP_CLASS, EARLIER_PROJECT } from "../constants";
 import Reveal from "./Reveal";
 import { FaArrowRight, FaChevronDown } from "react-icons/fa";
-
-// Problem, constraints, design and result, in the order the brief asks for.
-const CaseSection = ({ heading, children }) => (
-  <div>
-    <h4 className="mb-2 text-xs uppercase tracking-widest text-neutral-400">
-      {heading}
-    </h4>
-    {children}
-  </div>
-);
 
 const BulletList = ({ items }) => (
   <ul className="ml-5 list-disc space-y-2 leading-relaxed text-neutral-300">
@@ -28,12 +13,39 @@ const BulletList = ({ items }) => (
   </ul>
 );
 
+// A string is one paragraph, an array is a bullet list. Optional sections
+// (evals, limits) are left out entirely when a case study has none.
+const CaseSection = ({ heading, content }) =>
+  content ? (
+    <div>
+      <h4 className="mb-2 text-xs uppercase tracking-widest text-neutral-400">
+        {heading}
+      </h4>
+      {Array.isArray(content) ? (
+        <BulletList items={content} />
+      ) : (
+        <p className="leading-relaxed text-neutral-300">{content}</p>
+      )}
+    </div>
+  ) : null;
+
+// Problem, constraints, design and result, in the order the brief asks for,
+// with evals and limits where a case study has them.
+const SECTIONS = [
+  ["Problem", "problem"],
+  ["Constraints", "constraints"],
+  ["Design", "design"],
+  ["Evals", "evals"],
+  ["Result", "results"],
+  ["Limits", "limits"],
+];
+
 const LINK_CLASS =
   "inline-flex items-center gap-2 font-semibold text-purple-400 transition-colors hover:text-purple-300";
 
-// A card for a project outside the case studies. The links are separate rather
-// than wrapping the card, because a project with a video needs two and links
-// cannot nest. `id` keeps the aria-labelledby targets unique across cards.
+// A card for a project outside the case studies. The link sits inside rather
+// than wrapping the card, so the description stays selectable text. `id` keeps
+// the aria-labelledby targets unique.
 const ProjectCard = ({ id, label, project }) => (
   <Reveal from="below">
     <h3 className="mb-4 mt-12 text-center text-sm uppercase tracking-widest text-neutral-400">
@@ -65,30 +77,16 @@ const ProjectCard = ({ id, label, project }) => (
         <span id={`${id}-new-tab`} className="sr-only">
           (opens in a new tab)
         </span>
-        <div className="flex flex-wrap gap-6">
-          <a
-            href={project.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-labelledby={`${id}-title ${id}-new-tab`}
-            className={LINK_CLASS}
-          >
-            Visit the site
-            <FaArrowRight aria-hidden="true" />
-          </a>
-          {project.video && (
-            <a
-              href={project.video}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-labelledby={`${id}-video ${id}-title ${id}-new-tab`}
-              className={LINK_CLASS}
-            >
-              <span id={`${id}-video`}>Watch the video</span>
-              <FaArrowRight aria-hidden="true" />
-            </a>
-          )}
-        </div>
+        <a
+          href={project.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-labelledby={`${id}-title ${id}-new-tab`}
+          className={LINK_CLASS}
+        >
+          Visit the site
+          <FaArrowRight aria-hidden="true" />
+        </a>
       </div>
     </div>
   </Reveal>
@@ -141,31 +139,26 @@ const Work = () => {
               </summary>
 
               <div className="space-y-6 border-t border-neutral-800 px-6 pb-6 pt-6">
-                <CaseSection heading="Problem">
-                  <p className="leading-relaxed text-neutral-300">
-                    {study.problem}
-                  </p>
-                </CaseSection>
-                <CaseSection heading="Constraints">
-                  <BulletList items={study.constraints} />
-                </CaseSection>
-                <CaseSection heading="Design">
-                  <BulletList items={study.design} />
-                </CaseSection>
-                <CaseSection heading="Result">
-                  <BulletList items={study.results} />
-                </CaseSection>
+                {SECTIONS.map(([heading, key]) => (
+                  <CaseSection
+                    key={key}
+                    heading={heading}
+                    content={study[key]}
+                  />
+                ))}
+                {study.tags && (
+                  <ul aria-label="Technologies" className="flex flex-wrap gap-2">
+                    {study.tags.map((tag) => (
+                      <li key={tag} className={CHIP_CLASS}>
+                        {tag}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </details>
           </Reveal>
         ))}
-
-        {/* Labelled as a learning project so its AI features read as such. */}
-        <ProjectCard
-          id="personal-project"
-          label="Learning project"
-          project={PERSONAL_PROJECT}
-        />
 
         {/* Earlier work: kept on the site by decision, see the brief. */}
         <ProjectCard

@@ -1,5 +1,5 @@
-// Renders public/og-image.jpg (1200x630): name, title and the brief's one-line
-// summary on the left, the profile photo on the right.
+// Renders public/og-image.jpg (1200x630): name, title and the focus line on
+// the left, the profile photo on the right.
 //
 // Not part of `yarn build`. The output is committed, and the build should not
 // depend on which fonts the build machine has installed. Run it by hand with
@@ -37,8 +37,7 @@ const background = `
   <g font-family="Inter, sans-serif">
     <text x="72" y="230" font-size="84" font-weight="200" fill="#fafafa" letter-spacing="-2">Dilsher Singh</text>
     <text x="74" y="298" font-size="40" font-weight="400" fill="url(#title)">Senior Full Stack Engineer</text>
-    <text x="74" y="388" font-size="30" font-weight="300" fill="#d4d4d4">I build financial systems that</text>
-    <text x="74" y="430" font-size="30" font-weight="300" fill="#d4d4d4">have to be right every time.</text>
+    <text x="74" y="388" font-size="34" font-weight="300" fill="#d4d4d4">LLM and payment systems</text>
     <text x="74" y="520" font-size="22" font-weight="400" fill="#a3a3a3">Hong Kong · dilshersingh.com</text>
   </g>
 </svg>`;

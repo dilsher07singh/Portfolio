@@ -1,7 +1,6 @@
 import { FaLinkedin, FaGithub, FaEnvelope } from "react-icons/fa";
 import { GITHUB_URL } from "./site";
 import ipseityScreenshot from "../assets/optimized/project-3.webp";
-import collabEditorScreenshot from "../assets/optimized/collab-editor.webp";
 // Emitted by scripts/optimize-images.mjs. Used for the width/height attributes
 // so the browser can reserve the right box before the image loads; generated
 // rather than hardcoded so it stays in step with the encode settings.
@@ -24,38 +23,79 @@ export const CHIP_CLASS =
 export const HERO = {
   name: "Dilsher Singh",
   title: "Senior Full Stack Engineer",
-  tagline: "I build financial systems that have to be right every time.",
+  tagline: "I build LLM features and financial systems that have to be right every time.",
   subline:
-    "TypeScript/Node.js and React/Next.js in Hong Kong. I own a settlement pipeline that has paid investors 12,500+ times over 17 consecutive months, 100% on time.",
+    "TypeScript/Node.js and Python in Hong Kong. I shipped an LLM pipeline that turns legal documents into code-verified payout terms, and I own a settlement pipeline that has paid investors 12,500+ times over 17 consecutive months, 100% on time.",
   badges: [
     "Hong Kong Permanent Resident",
     "Team lead (5 engineers)",
-    "Hacken-audited settlement contracts (9.1/10)",
+    "LLM extraction in production",
   ],
 };
 
 // Deliberately not the 12,500+ payout figure: the hero sub-line already leads
-// with it, and repeating it a few centimetres lower dilutes it.
+// with it, and repeating it a few centimetres lower dilutes it. The 99% is a
+// field accuracy figure for these 12 templates only; never round it to 100%.
 export const METRICS = [
-  { value: "1,500+", label: "Financed assets on the backend I own" },
+  {
+    value: "99%",
+    label: "Field accuracy on a human-verified eval, 12 document templates",
+  },
+  { value: "1,342", label: "Legal documents covered by the LLM extraction pipeline" },
   { value: "0", label: "Ledger-to-settlement discrepancies since April 2025" },
-  { value: "13", label: "Corrupted records repaired, zero balances changed" },
   { value: "10", label: "Repositories where I gate merges" },
 ];
 
-export const ABOUT_TEXT = `I have built the same equipment-financing marketplace since 2022: the Next.js client, the Node.js/Express backend and the settlement contracts, which Hacken audited at 9.1/10. I joined Ipseity Network as an intern in 2021 and as a full stack engineer in 2022.
+export const ABOUT_TEXT = `I build LLM features for systems where a wrong number costs real money. In October 2026 I shipped one at Dualmint: a Python pipeline that extracts the legally committed yield terms from 1,342 asset provenance documents, verifies every quote against the source page in code, and has a person confirm the terms before our TypeScript backend checks each monthly payout against them. The model never decides a money value.
 
-When Dualmint was formed in 2025 from the merger of five companies, I was assigned to lead its platform as Senior Full Stack Engineer. Today I own the TypeScript backend for 1,500+ financed assets, lead a team of five engineers and gate merges across 10 repositories.
+I have built the same equipment-financing marketplace since 2022: the Next.js client, the Node.js/Express backend and the settlement contracts, which Hacken audited at 9.1/10. I joined Ipseity Network as an intern in 2021 and as a full stack engineer in 2022. When Dualmint was formed in 2025 from the merger of five companies, I was assigned to lead its platform as Senior Full Stack Engineer. Today I own the TypeScript backend for 1,500+ financed assets, lead a team of five engineers and gate merges across 10 repositories.
 
 Most of my work is about making money movement boring. Every payout is held until IoT telemetry, bank data and operator reports agree. A daily idempotent reconciliation job has found zero ledger-to-settlement discrepancies since April 2025, and event-log replay repaired 13 corrupted records without changing a single user balance.
 
-Settlement runs onchain, so I also work in Solidity, EIP-712 signing and multi-chain infrastructure, including a Chainlink CRE workflow live on Solana mainnet backed by a US$90,000 Solana Foundation grant. I also designed the AI-assisted process my team ships through: coding agents working from PRDs and scoped backlog issues, with strict TypeScript, pre-commit checks and human review on every merge. Earlier, at Ipseity Network, I worked on privacy-preserving data products: a consent-based data marketplace and a React Native identity wallet.`;
+Settlement runs onchain, so I also work in Solidity, EIP-712 signing and multi-chain infrastructure, including a Chainlink CRE workflow live on Solana mainnet backed by a US$90,000 Solana Foundation grant. I also designed the AI-assisted process my team ships through: coding agents working from PRDs and scoped backlog issues, with strict TypeScript, pre-commit checks and human review gating merges. Earlier, at Ipseity Network, I worked on privacy-preserving data products: a consent-based data marketplace and a React Native identity wallet.`;
 
 // "Selected work" in the brief's problem → constraints → design → result shape.
-// The brief publishes 1, 2 and 4 first; 3 (rollback deploys) and 5 (onchain
-// telemetry) are optional later additions. No internal repo names, client or
-// investor names, or anything that reveals private infrastructure.
+// No internal repo names, client or investor names, template identifiers,
+// yield values, or anything that reveals private infrastructure. A section
+// given as a string renders as a paragraph, an array as a bullet list;
+// `evals`, `limits` and `tags` are optional.
 export const CASE_STUDIES = [
+  {
+    id: "llm-extraction",
+    title: "LLM extraction that never decides a money value",
+    summary:
+      "A Python pipeline extracts the committed yield terms from legal PDFs with every quote verified in code. A person confirms them, and the TypeScript backend checks each payout against them.",
+    result:
+      "1,342 documents through 12 templates, 99% field accuracy on a human-verified eval. Shipped October 2026.",
+    problem:
+      "Every financed asset on Dualmint comes with provenance documents that state, in legal language, the yield an investor is promised. Payouts were checked against values in our database, not against what those documents actually committed to.",
+    constraints: [
+      "The documents are PDFs in a dozen layouts, some scanned and some inconsistent with themselves.",
+      "A model can misread a number or invent one, and a payout check built on a wrong number is worse than no check at all.",
+    ],
+    design: [
+      "I grouped the 1,342 documents into 12 templates by fingerprinting their layout, so the model extracts once per template plus two spot-checks, not once per document. The whole build cost about US$8 in API calls.",
+      "Every extracted value must come with a page and a quote. Code checks that the quote exists on that page and contains the value, and rejects anything that fails. Output is validated against a schema before it goes anywhere.",
+      "When a document states two different values for the same term, neither the model nor the code picks one. The field stays empty and every mention goes to a person.",
+      "An admin reviews and confirms each template's terms in a review screen. Confirmed terms are never edited in place; a changed document goes back through intake as new provenance. Ingest is idempotent, so re-running the pipeline never creates duplicates.",
+      "On every monthly yield deposit, the TypeScript backend compares the payout with the confirmed terms and reports the result, match or not.",
+    ],
+    evals:
+      "I labelled gold answers for all 12 templates and checked them field by field. The first run scored 90%, and most of the mismatches turned out to be mistakes in my own labels, not the model. After fixing the labels and narrowing one over-broad rule, the pipeline reached 99% field accuracy on the human-verified eval set.",
+    results:
+      "Shipped to production in late October 2026. All 12 templates are confirmed, and the first payouts it checked all matched the confirmed terms.",
+    limits:
+      "The 99% figure holds for these 12 templates. Quote verification proves a quote exists, not that it is the right clause, which is why a person confirms every template before any payout is checked against it. The model never decides a money value.",
+    tags: [
+      "Python",
+      "Anthropic API",
+      "Pydantic",
+      "structured extraction",
+      "LLM evals",
+      "TypeScript",
+      "Node.js",
+    ],
+  },
   {
     id: "payouts",
     title: "Payouts that wait for agreement",
@@ -82,6 +122,30 @@ export const CASE_STUDIES = [
     ],
   },
   {
+    id: "sdlc",
+    title: "An AI-assisted SDLC a team actually uses",
+    summary:
+      "Coding agents work from PRDs and scoped backlog issues. Strict TypeScript, lint, pre-commit checks and human review gating merges.",
+    result: "Adopted by all 5 engineers across 10 repositories",
+    problem:
+      "Coding agents can produce a lot of code quickly. The goal was to get that speed without lowering the quality bar on systems that move money.",
+    constraints: [
+      "It had to work for the whole team, not for one person.",
+      "It could not weaken review. Every change still has to be understood by a human before it merges.",
+    ],
+    design: [
+      "Work starts as a PRD and is broken into scoped backlog issues, so an agent always has a clear, bounded task.",
+      "Each repository carries its own agent scaffolding, AGENTS.md and agent skills, describing how that codebase is built and checked.",
+      "Agent-generated code passes the same gates as any other code: strict TypeScript, lint and pre-commit checks.",
+      "Human review gating merges.",
+      "This is an engineering process, not an AI product.",
+    ],
+    results: [
+      "Adopted by all 5 engineers across 10 repositories.",
+      "Merge gatekeeper on 435 of 592 client merges.",
+    ],
+  },
+  {
     id: "migration",
     title: "Migrating a live platform without stopping trading",
     summary:
@@ -103,55 +167,7 @@ export const CASE_STUDIES = [
       "Next.js 12 → 15, React 17 → 19 and web3.js → ethers v6 on a live, revenue-carrying platform.",
     ],
   },
-  {
-    id: "sdlc",
-    title: "An AI-assisted SDLC a team actually uses",
-    summary:
-      "Coding agents work from PRDs and scoped backlog issues. Strict TypeScript, lint, pre-commit checks and human review gate every merge.",
-    result: "Adopted by all 5 engineers across 10 repositories",
-    problem:
-      "Coding agents can produce a lot of code quickly. The goal was to get that speed without lowering the quality bar on systems that move money.",
-    constraints: [
-      "It had to work for the whole team, not for one person.",
-      "It could not weaken review. Every change still has to be understood by a human before it merges.",
-    ],
-    design: [
-      "Work starts as a PRD and is broken into scoped backlog issues, so an agent always has a clear, bounded task.",
-      "Each repository carries its own agent scaffolding, AGENTS.md and agent skills, describing how that codebase is built and checked.",
-      "Agent-generated code passes the same gates as any other code: strict TypeScript, lint and pre-commit checks.",
-      "A human reviews every merge.",
-      "This is an engineering process, not an AI product.",
-    ],
-    results: [
-      "Adopted by all 5 engineers across 10 repositories.",
-      "Merge gatekeeper on 435 of 592 client merges.",
-    ],
-  },
 ];
-
-// Learning project, labelled as such on the page: its AI features are not a
-// production claim (see "Never claim" and the decisions at the end of
-// docs/portfolio_brief.md).
-export const PERSONAL_PROJECT = {
-  title: "AI collaborative document editor",
-  image: collabEditorScreenshot,
-  imageSize: dimensions["collab-editor.webp"],
-  description:
-    "A Notion-style editor where several people edit the same document in real time. Edits merge through Yjs CRDTs synced over Liveblocks, with live cursors and presence, and documents are shared by invite with owner and editor roles. A Cloudflare Worker adds the AI features: ask questions about a document with OpenAI, or summarize it and translate the summary with Workers AI models. Built following a tutorial.",
-  technologies: [
-    "Next.js",
-    "TypeScript",
-    "Liveblocks",
-    "Yjs",
-    "Cloudflare Workers AI",
-    "OpenAI API",
-    "Firestore",
-    "Clerk",
-  ],
-  link: "https://notion-clone-youtube-six.vercel.app/",
-  // A walkthrough on Dilsher's own YouTube channel.
-  video: "https://www.youtube.com/watch?v=z6M8y0SlMig",
-};
 
 // Kept on the site by decision (see the end of docs/portfolio_brief.md).
 export const EARLIER_PROJECT = {
@@ -178,9 +194,10 @@ export const EXPERIENCES = [
     location: "Hong Kong",
     description: [
       "Shipped the first production version of the marketplace across client, backend and settlement contracts, audited at 9.1/10 by Hacken.",
+      "Built and shipped an LLM extraction pipeline (Python, Anthropic API) that turns legal provenance PDFs into cited, code-verified yield terms; the TypeScript backend checks each payout against them.",
       "Own the TypeScript backend for 1,500+ financed assets and the settlement pipeline that pays investors.",
       "Lead a team of five engineers and gate merges across 10 repositories.",
-      "Designed the AI-assisted process the team ships through, with human review on every merge.",
+      "Designed the AI-assisted process the team ships through, with human review gating merges.",
       "Onchain work includes a Chainlink CRE workflow live on Solana mainnet, backed by a US$90,000 Solana Foundation grant.",
     ],
   },
@@ -211,6 +228,21 @@ export const EDUCATION = {
 };
 
 export const SKILLS = [
+  {
+    group: "AI / LLM",
+    items: [
+      "Python",
+      "Anthropic API",
+      "Structured extraction",
+      "LLM evals",
+      "Pydantic",
+      "pytest",
+      "LangChain",
+      "LangGraph",
+      "RAG",
+      "Vercel AI SDK",
+    ],
+  },
   {
     group: "Backend",
     items: [

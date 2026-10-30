@@ -36,6 +36,7 @@ describe("portfolio brief rules", () => {
       /AI engineer/i,
       /GenAI/i,
       /LLM expert/i,
+      /cutting-edge/i,
     ];
     for (const pattern of banned) expect(text).not.toMatch(pattern);
   });
@@ -46,11 +47,27 @@ describe("portfolio brief rules", () => {
       /2-of-3/i,
       /royalt/i,
       /ERC-2981/i,
-      /LangChain|LangGraph|\bRAG\b|Vercel AI SDK/,
       /Kubernetes/i,
+      /C\+\+/,
       /underwriting/i,
+      /100%[^.]{0,40}accura/i,
+      /every merge/i,
+      /in our backend/i,
+      /hosted Python service/i,
+      /\bMCP\b/,
     ];
     for (const pattern of forbidden) expect(text).not.toMatch(pattern);
+  });
+
+  // RAG and LangChain may appear as skills, but never as part of how the
+  // extraction feature works, and nothing there may call it an agent.
+  it("does not describe the LLM extraction feature as RAG or agents", () => {
+    renderPageText();
+    const card = document.querySelector(
+      'article[aria-labelledby="work-llm-extraction"]',
+    );
+    expect(card).not.toBeNull();
+    expect(card.textContent).not.toMatch(/\bRAG\b|agent|LangChain|LangGraph/i);
   });
 
   it("publishes no job-search status and no WhatsApp number", () => {
