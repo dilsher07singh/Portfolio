@@ -31,7 +31,7 @@ not identity.
 - Title: Senior Full Stack Engineer
 - One line: I build financial systems that have to be right every time.
 - Sub-line: TypeScript/Node.js and React/Next.js in Hong Kong. I own a
-  settlement pipeline that has paid investors 12,500+ times over 17 consecutive
+  settlement pipeline that has paid investors 13,800+ times over 18 consecutive
   months, 100% on time.
 - Badges or small facts: Hong Kong Permanent Resident · Team lead (5 engineers)
   · Hacken-audited settlement contracts (9.1/10)
@@ -101,7 +101,7 @@ discuss on a whiteboard.
   emails an audit report, sorts discrepancies into three classes and auto-fixes
   only the actionable one. Principle: never lower a balance automatically,
   because that destroys authoritative data; log it and let a human decide.
-- Result: 12,500+ payout cycles over 17 consecutive months, 100% on time; zero
+- Result: 13,800+ payout cycles over 18 consecutive months, 100% on time; zero
   ledger-to-settlement discrepancies since April 2025; 13 corrupted records
   repaired by event-log replay with pre-state verification and zero balances
   changed.

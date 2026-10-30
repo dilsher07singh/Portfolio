@@ -25,7 +25,7 @@ export const HERO = {
   title: "Senior Full Stack Engineer",
   tagline: "I build LLM features and financial systems that have to be right every time.",
   subline:
-    "TypeScript/Node.js and Python in Hong Kong. I shipped an LLM pipeline that turns legal documents into code-verified payout terms, and I own a settlement pipeline that has paid investors 12,500+ times over 17 consecutive months, 100% on time.",
+    "TypeScript/Node.js and Python in Hong Kong. I shipped an LLM pipeline that turns legal documents into code-verified payout terms, and I own a settlement pipeline that has paid investors 13,800+ times over 18 consecutive months, 100% on time.",
   badges: [
     "Hong Kong Permanent Resident",
     "Team lead (5 engineers)",
@@ -33,7 +33,7 @@ export const HERO = {
   ],
 };
 
-// Deliberately not the 12,500+ payout figure: the hero sub-line already leads
+// Deliberately not the 13,800+ payout figure: the hero sub-line already leads
 // with it, and repeating it a few centimetres lower dilutes it. The 99% is a
 // field accuracy figure for these 12 templates only; never round it to 100%.
 export const METRICS = [
@@ -101,7 +101,7 @@ export const CASE_STUDIES = [
     title: "Payouts that wait for agreement",
     summary:
       "Investor payouts are held until three independent data sources agree, and a daily replay job checks the ledger against settlement.",
-    result: "12,500+ payouts over 17 consecutive months, 100% on time",
+    result: "13,800+ payouts over 18 consecutive months, 100% on time",
     problem:
       "Investors are paid from the revenue operators earn with financed machines. Every cycle has to pay out on time, and no cycle can pay out on bad data.",
     constraints: [
@@ -116,7 +116,7 @@ export const CASE_STUDIES = [
       "Corrupted records are repaired by replaying the event log, with the pre-repair state verified first.",
     ],
     results: [
-      "12,500+ payout cycles over 17 consecutive months, 100% on time.",
+      "13,800+ payout cycles over 18 consecutive months, 100% on time.",
       "Zero ledger-to-settlement discrepancies since April 2025.",
       "13 corrupted records repaired by event-log replay, with zero balances changed.",
     ],
